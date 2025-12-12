@@ -250,14 +250,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BotConfig:
     # ConfiguraciÃ³n de APIs y tokens
-    API_URL: str = REDACTED_API_URL
-    API_TOKEN: str = 'REDACTED_API_TOKEN'
+    API_URL: str = 'https://api.proveedor.com/request'
+    API_TOKEN: str = 'token'
     TELEGRAM_TOKENS: List[str] = field(default_factory=lambda: [
-        'REDACTED_TELEGRAM_TOKEN_1',
-        'REDACTED_TELEGRAM_TOKEN_2',
-        'REDACTED_TELEGRAM_TOKEN_3',
-        'REDACTED_TELEGRAM_TOKEN_4',
-        'REDACTED_TELEGRAM_TOKEN_5'
+        'bot1_token',
+        'bot2_token',
+        'bot3_token',
+        'bot4_token',
+        'bot5_token'
     ])
 
     # Control de peticiones y rate limiting
@@ -342,20 +342,20 @@ class BotConfig:
     ])
     
     BOOKMAKER_CHANNELS: Dict[str, int] = field(default_factory=lambda: {
-        'retabet_apuestas': REDACTED_CHANNEL_ID_1,
-        'bet365': REDACTED_CHANNEL_ID_2,
-        'winamax_es': REDACTED_CHANNEL_ID_3,
-        'yaasscasino': REDACTED_CHANNEL_ID_4,
-        'bwin': REDACTED_CHANNEL_ID_5,
-        'sportium':REDACTED_CHANNEL_ID_6,
-        'pokerstars_uk':REDACTED_CHANNEL_ID_7,
-        #'caliente':REDACTED_CHANNEL_ID_8,
-        'betway': REDACTED_CHANNEL_ID_9,
-        'admiral_at': REDACTED_CHANNEL_ID_10,
-        'versus': REDACTED_CHANNEL_ID_11
+        'retabet_apuestas': id,
+        'bet365': id,
+        'winamax_es': id,
+        'yaasscasino': id,
+        'bwin': id,
+        'sportium':id,
+        'pokerstars_uk':id,
+        #'caliente':id,
+        'betway': id,
+        'admiral_at': id,
+        'versus': id
     })
 
-    LOG_CHANNEL_ID: int = REDACTED_LOG_CHANNEL_ID  # ID del canal donde quieres recibir los logs
+    LOG_CHANNEL_ID: int = id  # ID del canal donde quieres recibir los logs
     
     # LÃ­mites de tiempo y validaciÃ³n
     MIN_ODDS: float = 1.1                # Cuota mÃ­nima aceptable
@@ -851,7 +851,7 @@ class CacheManager:
 
 # Gestion para validar picks con Redis
 class RedisHandler:
-    def __init__(self, host='localhost', port=6379, db=0, password='REDACTED_REDIS_PASSWORD', MIN_EVENT_TIME: int = 30):
+    def __init__(self, host='localhost', port=6379, db=0, password='PASSWORD', MIN_EVENT_TIME: int = 30):
         self.logger = logging.getLogger(__name__)
 
         self.pool = aioredis.ConnectionPool(
