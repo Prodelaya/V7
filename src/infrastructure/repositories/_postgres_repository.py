@@ -1,43 +1,37 @@
-"""PostgreSQL repository for future historical data storage.
+"""PostgreSQL repository for historical data - FUTURE.
 
-NOTE: This is a placeholder for future implementation.
-Not part of v2.0 scope.
+⚠️ DEFERRED: PostgreSQL persistence is not in scope for v2.0
+
+This file is a placeholder for future implementation when the
+system is stable and requires historical data storage.
+
+Reference:
+- docs/03-ADRs.md: ADR-007 (Persistencia PostgreSQL Diferida)
+- docs/01-SRS.md: Section 5.2 (Future Requirements)
+
+TODO: Implement when required (Phase 2+)
 """
 
-from typing import List, Optional
 
-from .base import BaseRepository
-
-
-class PostgresRepository(BaseRepository):
+class PostgresRepository:
     """
-    PostgreSQL repository for historical pick storage.
+    PostgreSQL repository for historical pick data.
     
-    TODO: Implement for v3.0 features:
-    - Pick history
-    - Automatic resolution
-    - Profitability dashboard
+    ⚠️ DEFERRED - Not in scope for v2.0
+    
+    Future features:
+    - Store all sent picks
+    - Pick resolution (won/lost)
+    - Yield calculations
+    - Analytics dashboard
+    
+    Reference:
+    - ADR-007 in docs/03-ADRs.md
+    - Section 5.2 in docs/01-SRS.md
     """
     
-    def __init__(self, dsn: str):
-        self._dsn = dsn
-        self._pool = None
-        raise NotImplementedError("PostgreSQL repository not implemented in v2.0")
-    
-    async def exists(self, key: str) -> bool:
-        raise NotImplementedError()
-    
-    async def exists_any(self, keys: List[str]) -> bool:
-        raise NotImplementedError()
-    
-    async def set(self, key: str, value: str, ttl: int) -> bool:
-        raise NotImplementedError()
-    
-    async def get(self, key: str) -> Optional[str]:
-        raise NotImplementedError()
-    
-    async def delete(self, key: str) -> bool:
-        raise NotImplementedError()
-    
-    async def close(self) -> None:
-        raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError(
+            "PostgresRepository is DEFERRED (ADR-007). "
+            "Not in scope for v2.0."
+        )

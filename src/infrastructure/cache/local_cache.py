@@ -1,114 +1,108 @@
-"""Local in-memory cache with LRU eviction."""
+"""Local in-memory cache.
+
+Implementation Requirements:
+- LRU eviction when max size reached
+- Optional TTL per entry
+- Thread-safe for async usage
+- First-level cache before Redis
+
+Reference:
+- docs/05-Implementation.md: Task 5.10
+- docs/02-PDR.md: Section 3.3.4 (Local Cache)
+
+TODO: Implement LocalCache
+"""
 
 import asyncio
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 class LocalCache:
     """
-    Local in-memory cache with LRU eviction.
+    In-memory cache with LRU eviction.
     
-    Used as a layer before Redis to reduce network calls.
-    Thread-safe with asyncio lock.
+    Used as first-level cache before Redis to reduce
+    network round trips.
+    
+    Features:
+    - Max size with LRU eviction
+    - Optional TTL per entry
+    - Async-safe
+    
+    TODO: Implement based on:
+    - Task 5.10 in docs/05-Implementation.md
+    - CacheManager in legacy/RetadorV6.py (line 772)
     """
     
-    def __init__(
-        self,
-        max_size: int = 1000,
-        cleanup_interval: int = 300,
-    ):
+    def __init__(self, max_size: int = 1000, default_ttl: Optional[int] = None):
+        """
+        Initialize cache.
+        
+        Args:
+            max_size: Maximum entries before eviction
+            default_ttl: Default TTL in seconds (None = no expiry)
+        """
         self._max_size = max_size
-        self._cleanup_interval = cleanup_interval
-        
-        self._cache: Dict[str, Any] = {}
-        self._access_times: Dict[str, float] = {}
+        self._default_ttl = default_ttl
+        self._cache = {}  # {key: value}
+        self._access_times = {}  # {key: last_access_time}
+        self._expiry_times = {}  # {key: expiry_time}
         self._lock = asyncio.Lock()
-        
-        self._cleanup_task: Optional[asyncio.Task] = None
-        self._last_cleanup = time.time()
     
     def get(self, key: str) -> Optional[Any]:
         """
-        Get value from cache.
+        Get value by key.
         
-        Updates access time for LRU tracking.
+        Returns None if not found or expired.
+        Updates access time for LRU.
+        
+        Args:
+            key: Cache key
+            
+        Returns:
+            Cached value or None
         """
-        if key in self._cache:
-            self._access_times[key] = time.time()
-            return self._cache[key]
-        return None
+        raise NotImplementedError("LocalCache.get not implemented")
     
-    async def set(self, key: str, value: Any) -> None:
-        """Set value in cache with LRU eviction."""
-        async with self._lock:
-            current_time = time.time()
-            
-            self._cache[key] = value
-            self._access_times[key] = current_time
-            
-            # Start cleanup task if not running
-            if not self._cleanup_task or self._cleanup_task.done():
-                self._cleanup_task = asyncio.create_task(self._auto_cleanup())
-            
-            # Evict if over size
-            if len(self._cache) > self._max_size:
-                await self._evict(int(self._max_size * 0.2))
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+        """
+        Set value with optional TTL.
+        
+        Evicts LRU entries if at max size.
+        
+        Args:
+            key: Cache key
+            value: Value to cache
+            ttl: TTL in seconds (None = use default)
+        """
+        raise NotImplementedError("LocalCache.set not implemented")
     
-    async def delete(self, key: str) -> None:
-        """Remove key from cache."""
-        async with self._lock:
-            self._cache.pop(key, None)
-            self._access_times.pop(key, None)
+    async def delete(self, key: str) -> bool:
+        """
+        Delete key from cache.
+        
+        Args:
+            key: Cache key
+            
+        Returns:
+            True if key existed
+        """
+        raise NotImplementedError("LocalCache.delete not implemented")
     
     async def clear(self) -> None:
-        """Clear all cache entries."""
-        async with self._lock:
-            self._cache.clear()
-            self._access_times.clear()
+        """Clear all entries."""
+        raise NotImplementedError("LocalCache.clear not implemented")
     
-    async def _evict(self, count: int) -> None:
-        """Evict least recently used entries."""
-        if not self._access_times:
-            return
+    async def cleanup_expired(self) -> int:
+        """
+        Remove expired entries.
         
-        # Sort by access time (oldest first)
-        entries = sorted(self._access_times.items(), key=lambda x: x[1])
-        to_remove = entries[:count]
-        
-        for key, _ in to_remove:
-            self._cache.pop(key, None)
-            self._access_times.pop(key, None)
+        Returns:
+            Number of entries removed
+        """
+        raise NotImplementedError("LocalCache.cleanup_expired not implemented")
     
-    async def _auto_cleanup(self) -> None:
-        """Periodic cleanup task."""
-        while True:
-            try:
-                await asyncio.sleep(60)
-                
-                current_time = time.time()
-                if current_time - self._last_cleanup >= self._cleanup_interval:
-                    async with self._lock:
-                        if len(self._cache) > self._max_size * 0.9:
-                            await self._evict(int(self._max_size * 0.1))
-                    self._last_cleanup = current_time
-                    
-            except asyncio.CancelledError:
-                break
-            except Exception:
-                await asyncio.sleep(60)
-    
-    @property
-    def size(self) -> int:
+    def __len__(self) -> int:
         """Current cache size."""
         return len(self._cache)
-    
-    async def cleanup(self) -> None:
-        """Stop cleanup task and clear cache."""
-        if self._cleanup_task and not self._cleanup_task.done():
-            self._cleanup_task.cancel()
-            try:
-                await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
-        await self.clear()

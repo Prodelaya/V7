@@ -1,27 +1,37 @@
-"""Telegram gateway with priority queue and bot rotation."""
+"""Telegram gateway with priority queue and bot rotation.
 
-import asyncio
+Implementation Requirements:
+- Priority queue (heap) ordered by profit descending
+- Multi-bot rotation for rate limiting (5 bots)
+- Max queue size: 1000 (reject low priority if full)
+- Retry with backoff
+
+Reference:
+- docs/05-Implementation.md: Task 5.8
+- docs/02-PDR.md: Section 3.3.2 (Telegram Gateway)
+- docs/03-ADRs.md: ADR-006 (Heap Priorizado)
+- docs/01-SRS.md: RF-008
+
+TODO: Implement TelegramGateway
+"""
+
 import heapq
-import logging
-from dataclasses import dataclass, field
 from typing import List, Optional
+from dataclasses import dataclass, field
 
 from aiogram import Bot
-from aiogram.enums import ParseMode
-from aiogram.exceptions import TelegramRetryAfter, TelegramForbiddenError
-
-from ...domain.entities.pick import Pick
-from .message_formatter import MessageFormatter
-
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass(order=True)
 class PriorityMessage:
-    """Message with priority for heap queue."""
-    priority: float  # Negative profit for max-heap behavior
-    pick: Pick = field(compare=False)
+    """
+    Message with priority for heap queue.
+    
+    Uses negative profit for max-heap behavior
+    (heapq is a min-heap).
+    """
+    priority: float  # Negative profit for max-heap
+    pick: object = field(compare=False)
     channel_id: int = field(compare=False)
     formatted: str = field(compare=False)
 
@@ -32,8 +42,24 @@ class TelegramGateway:
     
     Features:
     - Priority queue (heap) ordered by profit
-    - Bot rotation for rate limiting
-    - Automatic retry with backoff
+    - Higher profit picks sent first
+    - Multi-bot rotation (5 bots, 30 msg/s each)
+    - Graceful degradation when queue full
+    
+    Heap structure (from ADR-006):
+        (-profit, timestamp, channel_id, message)
+        Negative profit for max-heap behavior
+    
+    Queue behavior (from SRS RF-008):
+        - Max size: 1000 messages
+        - If full and new profit > min in queue: replace
+        - If full and new profit <= min: reject
+    
+    TODO: Implement based on:
+    - Task 5.8 in docs/05-Implementation.md
+    - ADR-006 in docs/03-ADRs.md
+    - RF-008 in docs/01-SRS.md
+    - TelegramSender in legacy/RetadorV6.py (line 1477)
     """
     
     MAX_QUEUE_SIZE = 1000
@@ -41,126 +67,58 @@ class TelegramGateway:
     def __init__(
         self,
         bot_tokens: List[str],
-        formatter: MessageFormatter,
+        formatter,  # MessageFormatter
         max_retries: int = 3,
     ):
+        """
+        Initialize gateway.
+        
+        Args:
+            bot_tokens: List of Telegram bot tokens (5 recommended)
+            formatter: MessageFormatter for formatting messages
+            max_retries: Max send attempts per message
+        """
         self._bots = [Bot(token=token) for token in bot_tokens]
         self._current_bot_index = 0
         self._formatter = formatter
         self._max_retries = max_retries
-        
-        # Priority queue (min-heap, use negative profit for max behavior)
         self._queue: List[PriorityMessage] = []
-        self._queue_lock = asyncio.Lock()
-        
-        # Processing
         self._is_running = False
-        self._process_task: Optional[asyncio.Task] = None
     
-    async def send(self, pick: Pick, channel_id: int) -> bool:
+    async def send(self, pick, channel_id: int) -> bool:
         """
         Add pick to priority queue for sending.
         
         Higher profit picks are sent first.
+        
+        Args:
+            pick: Pick entity
+            channel_id: Telegram channel ID
+            
+        Returns:
+            True if queued, False if rejected (queue full, low priority)
         """
-        async with self._queue_lock:
-            # Check queue size
-            if len(self._queue) >= self.MAX_QUEUE_SIZE:
-                # Reject if lower priority than minimum in queue
-                min_priority = -self._queue[0].priority if self._queue else 0
-                if pick.profit.value <= min_priority:
-                    logger.debug(f"Queue full, rejecting low priority pick")
-                    return False
-                # Remove lowest priority item
-                heapq.heappop(self._queue)
-            
-            # Format message
-            formatted = await self._formatter.format(pick)
-            
-            # Add to queue (negative priority for max-heap)
-            message = PriorityMessage(
-                priority=-pick.profit.value,
-                pick=pick,
-                channel_id=channel_id,
-                formatted=formatted,
-            )
-            heapq.heappush(self._queue, message)
-            
-        return True
+        raise NotImplementedError("TelegramGateway.send not implemented")
     
     async def start_processing(self) -> None:
         """Start background processing task."""
-        self._is_running = True
-        self._process_task = asyncio.create_task(self._process_loop())
+        raise NotImplementedError("TelegramGateway.start_processing not implemented")
     
     async def stop_processing(self) -> None:
         """Stop background processing."""
-        self._is_running = False
-        if self._process_task:
-            self._process_task.cancel()
-            try:
-                await self._process_task
-            except asyncio.CancelledError:
-                pass
+        raise NotImplementedError("TelegramGateway.stop_processing not implemented")
     
     async def _process_loop(self) -> None:
         """Main processing loop."""
-        while self._is_running:
-            try:
-                message = await self._get_next_message()
-                if message:
-                    await self._send_message(message)
-                else:
-                    await asyncio.sleep(0.01)
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"Error in process loop: {e}")
-                await asyncio.sleep(0.1)
-    
-    async def _get_next_message(self) -> Optional[PriorityMessage]:
-        """Get highest priority message from queue."""
-        async with self._queue_lock:
-            if self._queue:
-                return heapq.heappop(self._queue)
-        return None
+        raise NotImplementedError("TelegramGateway._process_loop not implemented")
     
     async def _send_message(self, message: PriorityMessage) -> bool:
         """Send message with retries and bot rotation."""
-        for attempt in range(self._max_retries):
-            bot = self._get_next_bot()
-            try:
-                await bot.send_message(
-                    chat_id=message.channel_id,
-                    text=message.formatted,
-                    parse_mode=ParseMode.HTML,
-                    disable_web_page_preview=True,
-                )
-                return True
-                
-            except TelegramRetryAfter as e:
-                logger.warning(f"Rate limited, waiting {e.retry_after}s")
-                await asyncio.sleep(e.retry_after)
-                self._rotate_bot()
-                
-            except TelegramForbiddenError:
-                logger.error(f"Bot forbidden from channel {message.channel_id}")
-                return False
-                
-            except Exception as e:
-                logger.error(f"Send error (attempt {attempt + 1}): {e}")
-                await asyncio.sleep(0.5 * (2 ** attempt))
-                self._rotate_bot()
-        
-        return False
-    
-    def _get_next_bot(self) -> Bot:
-        """Get current bot."""
-        return self._bots[self._current_bot_index]
+        raise NotImplementedError("TelegramGateway._send_message not implemented")
     
     def _rotate_bot(self) -> None:
         """Rotate to next bot."""
-        self._current_bot_index = (self._current_bot_index + 1) % len(self._bots)
+        raise NotImplementedError("TelegramGateway._rotate_bot not implemented")
     
     @property
     def queue_size(self) -> int:
@@ -169,6 +127,4 @@ class TelegramGateway:
     
     async def close(self) -> None:
         """Close all bot sessions."""
-        await self.stop_processing()
-        for bot in self._bots:
-            await bot.session.close()
+        raise NotImplementedError("TelegramGateway.close not implemented")
