@@ -1,59 +1,80 @@
-"""Calculation service for odds and stakes."""
+"""Calculation service for stake and min odds.
 
-from typing import Protocol
+Implementation Requirements:
+- Orchestrate calculators based on sharp bookmaker
+- Use CalculatorFactory to get correct strategy
+- Expose calculate_stake() and calculate_min_odds()
 
-from ..value_objects.odds import Odds
-from ..value_objects.profit import Profit
+Reference:
+- docs/04-Structure.md: "domain/services/"
+- docs/05-Implementation.md: Task 2.4
+- docs/02-PDR.md: Section 3.1.3 (Domain Services)
+
+TODO: Implement CalculationService
+"""
+
+from typing import Optional
+
 from .calculators.factory import CalculatorFactory
+from .calculators.base import StakeResult, MinOddsResult
 
 
 class CalculationService:
     """
-    Service for performing value bet calculations.
+    Domain service for pick calculations.
     
-    Handles minimum odds calculation and stake recommendations
-    based on sharp bookmaker odds.
+    Orchestrates the calculator strategy pattern to compute:
+    - Stake recommendation (emoji + confidence)
+    - Minimum acceptable odds in soft bookmaker
+    
+    TODO: Implement based on:
+    - Task 2.4 in docs/05-Implementation.md
+    - Section 3.1.3 in docs/02-PDR.md
     """
     
-    def __init__(self):
-        self._calculator_factory = CalculatorFactory()
+    def __init__(self, calculator_factory: Optional[CalculatorFactory] = None):
+        """
+        Initialize CalculationService.
+        
+        Args:
+            calculator_factory: Factory for getting calculators by bookmaker
+        """
+        self._factory = calculator_factory or CalculatorFactory()
+    
+    def calculate_stake(
+        self, 
+        profit: float, 
+        sharp_bookmaker: str
+    ) -> Optional[StakeResult]:
+        """
+        Calculate recommended stake based on profit and sharp bookmaker.
+        
+        Args:
+            profit: Surebet profit percentage
+            sharp_bookmaker: Name of the sharp bookmaker
+            
+        Returns:
+            StakeResult with emoji and confidence, or None if rejected
+        
+        Reference: RF-005 in docs/01-SRS.md
+        """
+        raise NotImplementedError("CalculationService.calculate_stake not implemented")
     
     def calculate_min_odds(
-        self,
-        sharp_odds: Odds,
-        sharp_bookmaker: str,
-        target_profit: float = -1.0
-    ) -> Odds:
-        """
-        Calculate minimum acceptable odds for a soft bookmaker.
-        
-        Args:
-            sharp_odds: Odds from the sharp bookmaker
-            sharp_bookmaker: Name of the sharp bookmaker
-            target_profit: Minimum acceptable profit percentage
-            
-        Returns:
-            Minimum odds needed to maintain target profit
-        """
-        calculator = self._calculator_factory.get_calculator(sharp_bookmaker)
-        return calculator.calculate_min_odds(sharp_odds, target_profit)
-    
-    def calculate_value(
-        self,
-        soft_odds: Odds,
-        sharp_odds: Odds,
+        self, 
+        sharp_odds: float, 
         sharp_bookmaker: str
-    ) -> Profit:
+    ) -> MinOddsResult:
         """
-        Calculate the expected value/profit of a bet.
+        Calculate minimum acceptable odds for soft bookmaker.
         
         Args:
-            soft_odds: Odds from the soft bookmaker
-            sharp_odds: Odds from the sharp bookmaker
+            sharp_odds: Odds of opposite market in sharp bookmaker
             sharp_bookmaker: Name of the sharp bookmaker
             
         Returns:
-            Profit value object with calculated profit percentage
+            MinOddsResult with minimum odds value
+        
+        Reference: RF-006 in docs/01-SRS.md
         """
-        calculator = self._calculator_factory.get_calculator(sharp_bookmaker)
-        return calculator.calculate_value(soft_odds, sharp_odds)
+        raise NotImplementedError("CalculationService.calculate_min_odds not implemented")

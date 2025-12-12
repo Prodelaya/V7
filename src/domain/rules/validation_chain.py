@@ -1,86 +1,106 @@
-"""Validation chain for pick validation."""
+"""Validation chain implementing Chain of Responsibility pattern.
 
-from typing import List, Tuple, Optional
+Implementation Requirements:
+- Chain multiple validators in order
+- Fail-fast: stop on first failure
+- Return ValidationResult with is_valid, error_message, failed_validator
+- Order validators by cost (CPU first, I/O last)
+
+Reference:
+- docs/02-PDR.md: Section 4.2 (Chain of Responsibility)
+- docs/05-Implementation.md: Task 3.5
+- docs/03-ADRs.md: ADR-005
+- docs/01-SRS.md: RF-003 (validation requirements)
+
+TODO: Implement ValidationChain
+"""
+
 from dataclasses import dataclass
+from typing import List, Optional
 
 from .validators.base import BaseValidator
 
 
 @dataclass
 class ValidationResult:
-    """Result of validation chain execution."""
+    """
+    Result of validation chain execution.
+    
+    Attributes:
+        is_valid: True if all validators passed
+        error_message: Description of failure (if any)
+        failed_validator: Name of validator that failed (if any)
+    """
     is_valid: bool
-    failed_validator: Optional[str] = None
     error_message: Optional[str] = None
+    failed_validator: Optional[str] = None
 
 
 class ValidationChain:
     """
-    Chain of responsibility for pick validation.
+    Chain of Responsibility for pick validation.
     
-    Executes validators in order, failing fast on first failure.
+    Executes validators in order, stopping at first failure (fail-fast).
+    
+    Validation order (from docs/03-ADRs.md ADR-005):
+        1. OddsValidator (CPU, ~0ms)
+        2. ProfitValidator (CPU, ~0ms)
+        3. TimeValidator (CPU, ~0ms)
+        4. DuplicateValidator (I/O Redis, ~5ms)
+        5. OppositeMarketValidator (I/O Redis, ~5ms)
+    
+    TODO: Implement based on:
+    - Task 3.5 in docs/05-Implementation.md
+    - ADR-005 in docs/03-ADRs.md
     """
     
-    def __init__(self, validators: List[BaseValidator] = None):
-        self._validators: List[BaseValidator] = validators or []
+    def __init__(self, validators: Optional[List[BaseValidator]] = None):
+        """
+        Initialize validation chain.
+        
+        Args:
+            validators: List of validators in execution order
+        """
+        self._validators = validators or []
     
-    def add_validator(self, validator: BaseValidator) -> "ValidationChain":
-        """Add a validator to the chain."""
-        self._validators.append(validator)
-        return self
-    
-    def remove_validator(self, validator_name: str) -> "ValidationChain":
-        """Remove a validator by name."""
-        self._validators = [
-            v for v in self._validators 
-            if v.name != validator_name
-        ]
-        return self
+    def add_validator(self, validator: BaseValidator) -> None:
+        """
+        Add a validator to the chain.
+        
+        Args:
+            validator: Validator to add
+        """
+        raise NotImplementedError("ValidationChain.add_validator not implemented")
     
     async def validate(self, pick_data: dict) -> ValidationResult:
         """
-        Execute validation chain on pick data.
+        Run all validators on pick data.
         
-        Fails fast on first validation failure.
-        
-        Args:
-            pick_data: Raw pick data to validate
-            
-        Returns:
-            ValidationResult with status and error info if failed
-        """
-        for validator in self._validators:
-            is_valid, error_message = await validator.validate(pick_data)
-            
-            if not is_valid:
-                return ValidationResult(
-                    is_valid=False,
-                    failed_validator=validator.name,
-                    error_message=error_message
-                )
-        
-        return ValidationResult(is_valid=True)
-    
-    async def validate_batch(
-        self, 
-        picks: List[dict]
-    ) -> List[Tuple[dict, ValidationResult]]:
-        """
-        Validate a batch of picks.
+        Stops at first failure (fail-fast).
         
         Args:
-            picks: List of raw pick data
+            pick_data: Raw pick data from API
             
         Returns:
-            List of tuples with pick and its validation result
+            ValidationResult indicating success or failure
+        
+        Reference: RF-003 in docs/01-SRS.md
         """
-        results = []
-        for pick in picks:
-            result = await self.validate(pick)
-            results.append((pick, result))
-        return results
+        raise NotImplementedError("ValidationChain.validate not implemented")
     
-    @property
-    def validators(self) -> List[str]:
-        """Get list of validator names in order."""
-        return [v.name for v in self._validators]
+    @classmethod
+    def create_default(cls) -> "ValidationChain":
+        """
+        Create chain with default validators in correct order.
+        
+        Order (from ADR-005):
+            1. OddsValidator
+            2. ProfitValidator
+            3. TimeValidator
+            4. DuplicateValidator
+            5. OppositeMarketValidator
+        
+        Returns:
+            Configured ValidationChain
+        """
+        raise NotImplementedError("ValidationChain.create_default not implemented")

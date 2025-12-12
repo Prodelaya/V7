@@ -1,4 +1,20 @@
-"""Pinnacle-specific calculator implementation."""
+"""Pinnacle-specific calculator implementation.
+
+Implementation Requirements:
+- Implement BaseCalculator for Pinnacle Sports
+- Use CORRECT min_odds formula: 1 / (1.01 - 1/sharp_odds)
+- Stake ranges from docs/01-SRS.md RF-005
+
+Reference:
+- docs/02-PDR.md: Section 4.1 (Strategy Pattern)
+- docs/05-Implementation.md: Task 2.2
+- docs/03-ADRs.md: ADR-003 (CORRECT formula)
+- docs/01-SRS.md: RF-005, RF-006, Appendix 6.2
+
+⚠️ CRITICAL: The legacy V6 formula was WRONG! See ADR-003.
+
+TODO: Implement PinnacleCalculator
+"""
 
 from typing import Optional
 
@@ -14,15 +30,35 @@ class PinnacleCalculator(BaseCalculator):
     - Winners accepted policy
     - Efficient odds that reflect true probabilities
     
-    Stake ranges are based on surebet profit percentage:
-    - 🔴 Low confidence: -1% to -0.5% profit
-    - 🟠 Medium-low: -0.5% to 1.5% profit  
-    - 🟡 Medium-high: 1.5% to 4% profit
-    - 🟢 High confidence: >4% profit
+    Stake ranges (from docs/01-SRS.md RF-005):
+        | Profit       | Emoji | Confidence |
+        |--------------|-------|------------|
+        | -1% to -0.5% | 🔴    | Low        |
+        | -0.5% to 1.5%| 🟠    | Medium-low |
+        | 1.5% to 4%   | 🟡    | Medium-high|
+        | >4%          | 🟢    | High       |
+    
+    Min odds formula (from docs/03-ADRs.md ADR-003):
+        min_odds = 1 / (1.01 - 1/sharp_odds)
+    
+    Reference table (from docs/01-SRS.md Appendix 6.2):
+        | Sharp Odds | Min Soft Odds |
+        |------------|---------------|
+        | 1.50       | 2.92          |
+        | 1.80       | 2.20          |
+        | 2.00       | 1.96          |
+        | 2.05       | 1.92          |
+        | 2.50       | 1.64          |
+        | 3.00       | 1.48          |
+    
+    TODO: Implement based on:
+    - Task 2.2 in docs/05-Implementation.md
+    - ADR-003 in docs/03-ADRs.md
+    - get_stake() in legacy/RetadorV6.py (line 1267) - Pinnacle branch ONLY
     """
     
-    # Profit ranges for stake calculation
-    # (min_profit, max_profit, emoji, confidence, units)
+    # Profit ranges: (min_profit, max_profit, emoji, confidence, units)
+    # Reference: docs/01-SRS.md RF-005
     PROFIT_RANGES = [
         (-1.0, -0.5, "🔴", 0.25, (0.5, 1.0, 1.5)),
         (-0.5,  1.5, "🟠", 0.50, (1.0, 1.5, 2.0)),
@@ -31,11 +67,11 @@ class PinnacleCalculator(BaseCalculator):
     ]
     
     # Profit limits
-    MIN_PROFIT = -1.0   # Minimum acceptable profit (%)
-    MAX_PROFIT = 25.0   # Maximum acceptable profit (%)
+    MIN_PROFIT = -1.0   # Minimum acceptable (%)
+    MAX_PROFIT = 25.0   # Maximum acceptable (%)
     
-    # Profit threshold for min_odds calculation
-    PROFIT_THRESHOLD = -0.01  # -1% as decimal
+    # Profit threshold for min_odds calculation (as decimal)
+    PROFIT_THRESHOLD = -0.01  # -1%
     
     @property
     def name(self) -> str:
@@ -50,79 +86,38 @@ class PinnacleCalculator(BaseCalculator):
             profit: Surebet profit percentage (e.g., 2.5 means 2.5%)
             
         Returns:
-            StakeResult with emoji and unit suggestions, or None if invalid
-            
-        Examples:
+            StakeResult with emoji and units, or None if out of range
+        
+        Example:
             >>> calc = PinnacleCalculator()
             >>> result = calc.calculate_stake(2.5)
             >>> result.emoji
             '🟡'
-            >>> result.units_suggestion
-            (1.5, 2.0, 3.0)
         """
-        if not self.is_valid_profit(profit):
-            return None
-        
-        for min_p, max_p, emoji, confidence, units in self.PROFIT_RANGES:
-            if min_p <= profit <= max_p:
-                return StakeResult(
-                    emoji=emoji,
-                    confidence=confidence,
-                    units_suggestion=units
-                )
-        
-        return None  # Should not reach here if ranges are complete
+        raise NotImplementedError("PinnacleCalculator.calculate_stake not implemented")
     
     def calculate_min_odds(self, sharp_odds: float) -> MinOddsResult:
         """
-        Calculate minimum acceptable odds in soft bookmaker to maintain -1% value.
+        Calculate minimum acceptable odds in soft bookmaker.
         
-        Formula derivation:
-            profit = 1 - (1/odd_sharp + 1/odd_soft)
-            For profit = -0.01 (-1%):
-            -0.01 = 1 - (1/odd_sharp + 1/odd_soft)
-            1/odd_soft = 1.01 - 1/odd_sharp
-            odd_soft = 1 / (1.01 - 1/odd_sharp)
+        ⚠️ USE CORRECT FORMULA from ADR-003:
+            min_odds = 1 / (1.01 - 1/sharp_odds)
+        
+        ❌ DO NOT use legacy V6 formula (it was WRONG!)
         
         Args:
-            sharp_odds: Odds of the OPPOSITE market in Pinnacle
+            sharp_odds: Odds of OPPOSITE market in Pinnacle
             
         Returns:
-            MinOddsResult with minimum acceptable odds
-            
-        Examples:
+            MinOddsResult with minimum odds
+        
+        Example:
             >>> calc = PinnacleCalculator()
             >>> result = calc.calculate_min_odds(2.05)
             >>> result.min_odds
             1.92
         """
-        try:
-            # Formula: min_odds = 1 / (1 - profit_threshold - 1/sharp_odds)
-            # With profit_threshold = -0.01:
-            # min_odds = 1 / (1 - (-0.01) - 1/sharp_odds)
-            # min_odds = 1 / (1.01 - 1/sharp_odds)
-            
-            denominator = (1 - self.PROFIT_THRESHOLD) - (1 / sharp_odds)
-            
-            if denominator <= 0:
-                # Sharp odds too low, would need impossible soft odds
-                return MinOddsResult(
-                    min_odds=99.99,
-                    profit_threshold=self.PROFIT_THRESHOLD
-                )
-            
-            min_odds = 1 / denominator
-            
-            return MinOddsResult(
-                min_odds=round(min_odds, 2),
-                profit_threshold=self.PROFIT_THRESHOLD
-            )
-            
-        except (ZeroDivisionError, ValueError):
-            return MinOddsResult(
-                min_odds=99.99,
-                profit_threshold=self.PROFIT_THRESHOLD
-            )
+        raise NotImplementedError("PinnacleCalculator.calculate_min_odds not implemented")
     
     def is_valid_profit(self, profit: float) -> bool:
         """
@@ -134,4 +129,4 @@ class PinnacleCalculator(BaseCalculator):
         Returns:
             True if -1% <= profit <= 25%
         """
-        return self.MIN_PROFIT <= profit <= self.MAX_PROFIT
+        raise NotImplementedError("PinnacleCalculator.is_valid_profit not implemented")

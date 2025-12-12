@@ -1,41 +1,58 @@
-"""Odds validator for pick validation."""
+"""Odds validator - Check if odds are within acceptable range.
 
-from typing import Tuple
+Implementation Requirements:
+- Validate odds between MIN_ODDS (1.10) and MAX_ODDS (9.99)
+- CPU-only operation (no I/O)
+
+Reference:
+- docs/05-Implementation.md: Task 3.2
+- docs/01-SRS.md: RF-003 (validation requirements)
+
+TODO: Implement OddsValidator
+"""
+
+from typing import Tuple, Optional
 
 from .base import BaseValidator
 
 
 class OddsValidator(BaseValidator):
     """
-    Validates that odds are within acceptable range.
+    Validator for betting odds range.
     
-    Default range: 1.10 to 9.99
+    Checks that odds are within configured range:
+    - Minimum: 1.10 (from SRS)
+    - Maximum: 9.99 (from SRS)
+    
+    TODO: Implement based on:
+    - Task 3.2 in docs/05-Implementation.md
+    - RF-003 in docs/01-SRS.md
     """
     
-    def __init__(self, min_odds: float, max_odds: float):
+    def __init__(self, min_odds: float = 1.10, max_odds: float = 9.99):
+        """
+        Initialize with odds range.
+        
+        Args:
+            min_odds: Minimum acceptable odds (default 1.10)
+            max_odds: Maximum acceptable odds (default 9.99)
+        """
         self._min_odds = min_odds
         self._max_odds = max_odds
     
     @property
     def name(self) -> str:
-        return "odds_validator"
+        return "OddsValidator"
     
-    async def validate(self, pick_data: dict) -> Tuple[bool, str | None]:
-        """Validate odds are within range."""
-        try:
-            # Get odds from soft prong
-            prongs = pick_data.get("prongs", [])
+    async def validate(self, pick_data: dict) -> Tuple[bool, Optional[str]]:
+        """
+        Check if odds are within range.
+        
+        Args:
+            pick_data: Must contain odds value
             
-            for prong in prongs:
-                odds = float(prong.get("odd", 0))
-                
-                if not self._min_odds <= odds <= self._max_odds:
-                    return (
-                        False,
-                        f"Odds {odds} outside range [{self._min_odds}, {self._max_odds}]"
-                    )
-            
-            return (True, None)
-            
-        except (ValueError, TypeError, KeyError) as e:
-            return (False, f"Invalid odds data: {e}")
+        Returns:
+            (True, None) if valid
+            (False, "message") if invalid
+        """
+        raise NotImplementedError("OddsValidator.validate not implemented")

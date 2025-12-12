@@ -1,78 +1,73 @@
-"""Duplicate validator for pick validation."""
+"""Duplicate validator - Check Redis for already-sent picks.
 
-from typing import Tuple, Protocol
+Implementation Requirements:
+- Check if pick key exists in Redis
+- Check if opposite market was sent (rebote detection)
+- I/O operation (Redis)
+- Use repository pattern (inject repository)
+
+Reference:
+- docs/05-Implementation.md: Task 6.2
+- docs/01-SRS.md: RF-004 (deduplication)
+- docs/03-ADRs.md: ADR-004 (No Bloom Filter)
+
+TODO: Implement DuplicateValidator
+"""
+
+from typing import Tuple, Optional, Protocol
 
 
-class DuplicateChecker(Protocol):
-    """Protocol for duplicate checking backends."""
-    
-    async def exists(self, key: str) -> bool:
-        """Check if key exists."""
-        ...
-    
-    async def exists_any(self, keys: list[str]) -> bool:
-        """Check if any key exists."""
-        ...
+class PickRepository(Protocol):
+    """Protocol for pick repository."""
+    async def exists(self, key: str) -> bool: ...
+    async def exists_any(self, keys: list) -> bool: ...
 
 
-class DuplicateValidator:
+from .base import BaseValidator
+
+
+class DuplicateValidator(BaseValidator):
     """
-    Validates that a pick has not been sent before.
+    Validator for duplicate/rebote detection.
     
-    Checks both the exact pick and opposite market keys.
-    Uses external duplicate checker (Redis repository).
+    Checks Redis to determine if:
+    1. This exact pick was already sent
+    2. The opposite market was already sent (rebote)
+    
+    ⚠️ NO Bloom Filter (from ADR-012 - false positives lose picks)
+    ⚠️ NO fire-and-forget (from ADR-013 - race conditions)
+    
+    TODO: Implement based on:
+    - Task 6.2 in docs/05-Implementation.md
+    - RF-004 in docs/01-SRS.md
+    - ADR-004 in docs/03-ADRs.md
+    - is_any_market_stored() in legacy/RetadorV6.py (line 1077)
     """
     
-    def __init__(self, duplicate_checker: DuplicateChecker):
-        self._checker = duplicate_checker
+    def __init__(self, repository: PickRepository):
+        """
+        Initialize with repository.
+        
+        Args:
+            repository: Repository for checking existence
+        """
+        self._repository = repository
     
     @property
     def name(self) -> str:
-        return "duplicate_validator"
+        return "DuplicateValidator"
     
-    async def validate(self, pick_data: dict) -> Tuple[bool, str | None]:
-        """Validate pick is not a duplicate."""
-        try:
-            # Generate primary key
-            key = self._generate_key(pick_data)
-            
-            # Check if already sent
-            if await self._checker.exists(key):
-                return (False, f"Duplicate pick: {key}")
-            
-            # Generate and check opposite market keys
-            opposite_keys = self._generate_opposite_keys(pick_data)
-            if opposite_keys and await self._checker.exists_any(opposite_keys):
-                return (False, f"Opposite market already sent")
-            
-            return (True, None)
-            
-        except Exception as e:
-            return (False, f"Duplicate check error: {e}")
-    
-    def _generate_key(self, pick_data: dict) -> str:
-        """Generate unique key for pick."""
-        teams = pick_data.get("teams", ["", ""])
-        event_time = str(pick_data.get("time", ""))
-        type_dict = pick_data.get("type", {})
-        market_type = type_dict.get("type", "").lower()
-        variety = type_dict.get("variety", "").lower()
-        bookmaker = pick_data.get("target_bookmaker", "")
+    async def validate(self, pick_data: dict) -> Tuple[bool, Optional[str]]:
+        """
+        Check if pick or opposite was already sent.
         
-        return f"{teams[0]}:{teams[1]}:{event_time}:{market_type}:{variety}:{bookmaker}"
-    
-    def _generate_opposite_keys(self, pick_data: dict) -> list[str]:
-        """Generate keys for opposite markets."""
-        from ...value_objects.market_type import OPPOSITE_MARKETS
+        Args:
+            pick_data: Must contain data to generate Redis key
+            
+        Returns:
+            (True, None) if NOT duplicate (can send)
+            (False, "message") if duplicate or rebote
         
-        teams = pick_data.get("teams", ["", ""])
-        event_time = str(pick_data.get("time", ""))
-        type_dict = pick_data.get("type", {})
-        market_type = type_dict.get("type", "").lower()
-        variety = type_dict.get("variety", "").lower()
-        bookmaker = pick_data.get("target_bookmaker", "")
-        
-        base = f"{teams[0]}:{teams[1]}:{event_time}"
-        
-        opposite_types = OPPOSITE_MARKETS.get(market_type, [])
-        return [f"{base}:{opp}:{variety}:{bookmaker}" for opp in opposite_types]
+        Reference: RF-004 in docs/01-SRS.md
+        """
+        raise NotImplementedError("DuplicateValidator.validate not implemented")

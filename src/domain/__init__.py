@@ -1,18 +1,10 @@
-"""Domain layer - Pure business logic."""
+"""Domain layer - Pure business logic without external dependencies.
 
-from .entities import Pick, Surebet, Bookmaker
-from .value_objects import Odds, Profit, MarketType
-from .services import CalculationService, OppositeMarketService
-from .rules import ValidationChain
+Contains:
+- entities/: Core business objects (Pick, Surebet, Bookmaker)
+- value_objects/: Immutable validated types (Odds, Profit, MarketType)
+- services/: Domain services and calculations
+- rules/: Validation chain and validators
 
-__all__ = [
-    "Pick",
-    "Surebet",
-    "Bookmaker",
-    "Odds",
-    "Profit",
-    "MarketType",
-    "CalculationService",
-    "OppositeMarketService",
-    "ValidationChain",
-]
+Reference: docs/04-Structure.md
+"""

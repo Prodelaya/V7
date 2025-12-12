@@ -1,47 +1,61 @@
-"""Bookmaker entity representing a betting house."""
+"""Bookmaker entity representing a betting house.
+
+Implementation Requirements:
+- Enum for bookmaker type: SHARP or SOFT
+- Configuration for each bookmaker (name, type, channels)
+- Reference sharp list: pinnaclesports
+- Reference soft list: retabet_apuestas, yaasscasino, etc.
+
+Reference:
+- docs/04-Structure.md: "domain/entities/"
+- docs/05-Implementation.md: Task 1.6
+- legacy/RetadorV6.py: BotConfig.BOOKIE_HIERARCHY, TARGET_BOOKIES
+
+TODO: Implement Bookmaker entity
+"""
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 
 class BookmakerType(Enum):
-    """Type of bookmaker based on odds efficiency."""
+    """Type of bookmaker."""
     SHARP = "sharp"
     SOFT = "soft"
 
 
-@dataclass
+@dataclass(frozen=True)
 class Bookmaker:
     """
     Represents a bookmaker/betting house.
     
-    Sharps have efficient odds (low margin), while softs have
-    inflated odds that can offer value opportunities.
+    Attributes:
+        name: Internal identifier (e.g., "pinnaclesports", "retabet_apuestas")
+        type: SHARP or SOFT classification
+        display_name: Human-readable name
+        channel_id: Optional Telegram channel ID for this bookmaker
+    
+    TODO: Implement based on:
+    - Task 1.6 in docs/05-Implementation.md
+    - BotConfig in legacy/RetadorV6.py (lines 250-360)
     """
     
-    id: str
     name: str
     type: BookmakerType
-    telegram_channel_id: Optional[int] = None
-    allowed_counterparts: List[str] = None
+    display_name: Optional[str] = None
+    channel_id: Optional[int] = None
     
     def __post_init__(self):
-        if self.allowed_counterparts is None:
-            self.allowed_counterparts = []
+        # TODO: Add validation
+        raise NotImplementedError("Bookmaker entity not yet implemented")
     
     @property
     def is_sharp(self) -> bool:
         """Check if bookmaker is a sharp."""
-        return self.type == BookmakerType.SHARP
+        raise NotImplementedError
     
     @property
     def is_soft(self) -> bool:
         """Check if bookmaker is a soft."""
-        return self.type == BookmakerType.SOFT
-    
-    def can_use_counterpart(self, counterpart_id: str) -> bool:
-        """Check if a counterpart bookmaker is allowed."""
-        if not self.allowed_counterparts:
-            return True
-        return counterpart_id.lower() in [c.lower() for c in self.allowed_counterparts]
+        raise NotImplementedError

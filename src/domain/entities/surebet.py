@@ -1,55 +1,93 @@
-"""Surebet entity representing an arbitrage opportunity."""
+"""Surebet entity representing an arbitrage opportunity.
+
+Implementation Requirements:
+- Contains two prongs: sharp (Pinnacle) and soft (target bookmaker)
+- Calculates profit from the two prongs
+- Determines which prong is sharp vs soft based on bookmaker hierarchy
+
+Reference:
+- docs/04-Structure.md: "domain/entities/"
+- docs/05-Implementation.md: Task 1.8
+- docs/01-SRS.md: Section 2.2 (Business Model)
+- docs/02-PDR.md: Section 3.1.2 (Entities)
+
+TODO: Implement Surebet entity
+"""
 
 from dataclasses import dataclass
-from datetime import datetime
-from typing import List
+from typing import Dict, Any, Optional
+
+from .pick import Pick
 
 
-@dataclass
+@dataclass(frozen=True)
 class Prong:
-    """Represents one side/leg of a surebet."""
+    """
+    Represents one side of a surebet.
     
+    Attributes:
+        bookmaker: Bookmaker identifier
+        odds: Betting odds
+        market_type: Market type
+        variety: Market variety/condition
+    """
     bookmaker: str
     odds: float
     market_type: str
     variety: str
-    link: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class Surebet:
     """
-    Represents a surebet/arbitrage opportunity from the API.
+    Represents a surebet (arbitrage opportunity) between two bookmakers.
     
-    A surebet consists of two prongs (legs) where betting both
-    sides guarantees a profit or minimal loss.
+    A surebet consists of:
+    - prong_sharp: The side at the sharp bookmaker (Pinnacle)
+    - prong_soft: The side at the soft bookmaker (target)
+    - profit: Calculated profit percentage
+    
+    TODO: Implement based on:
+    - Task 1.8 in docs/05-Implementation.md
+    - Section 2.2 in docs/01-SRS.md
+    - determine_bet_roles() in legacy/RetadorV6.py
     """
     
-    id: str
-    teams: tuple[str, str]
-    tournament: str
-    sport: str
-    event_time: datetime
+    prong_sharp: Prong
+    prong_soft: Prong
     profit: float
-    prongs: List[Prong]
-    created_at: datetime
+    teams: tuple
+    event_time: int
+    tournament: str
+    sport_id: str
     
-    @property
-    def sharp_prong(self) -> Prong | None:
-        """Returns the prong from the sharp bookmaker (Pinnacle)."""
-        for prong in self.prongs:
-            if prong.bookmaker.lower() == "pinnaclesports":
-                return prong
-        return None
+    def __post_init__(self):
+        # TODO: Add validation
+        raise NotImplementedError("Surebet entity not yet implemented")
     
-    @property
-    def soft_prong(self) -> Prong | None:
-        """Returns the prong from the soft bookmaker."""
-        for prong in self.prongs:
-            if prong.bookmaker.lower() != "pinnaclesports":
-                return prong
-        return None
+    @classmethod
+    def from_api_response(cls, data: dict) -> Optional["Surebet"]:
+        """
+        Create Surebet from API response.
+        
+        Must determine which prong is sharp and which is soft
+        based on bookmaker hierarchy.
+        
+        Args:
+            data: Raw API response with 'prongs' array
+            
+        Returns:
+            Surebet entity or None if invalid
+            
+        Reference: determine_bet_roles() in legacy/RetadorV6.py
+        """
+        raise NotImplementedError
     
-    def has_valid_structure(self) -> bool:
-        """Check if surebet has exactly 2 prongs with one sharp."""
-        return len(self.prongs) == 2 and self.sharp_prong is not None
+    def to_pick(self) -> Pick:
+        """
+        Convert to Pick entity (the soft prong becomes the pick).
+        
+        Returns:
+            Pick entity for the soft side
+        """
+        raise NotImplementedError
