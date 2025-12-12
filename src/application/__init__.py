@@ -1,5 +1,8 @@
-"""Application layer - Orchestration and use cases."""
+"""Application layer - Use cases and orchestration.
 
-from .handlers import PickHandler
+Contains:
+- handlers/: Application services that orchestrate domain operations
+- dto/: Data Transfer Objects for API/domain conversion
 
-__all__ = ["PickHandler"]
+Reference: docs/04-Structure.md
+"""

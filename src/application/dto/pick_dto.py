@@ -1,107 +1,95 @@
-"""Pick DTO for API data transformation."""
+"""Pick Data Transfer Object for API/domain conversion.
+
+Implementation Requirements:
+- Parse raw API response into structured data
+- Convert to domain entities (Pick, Surebet)
+- Handle prong role determination (sharp vs soft)
+
+Reference:
+- docs/05-Implementation.md: Task 6.1
+- docs/04-Structure.md: "application/dto/"
+
+TODO: Implement PickDTO
+"""
 
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from ...domain.entities.pick import Pick
-from ...domain.value_objects.odds import Odds
-from ...domain.value_objects.profit import Profit
-from ...domain.value_objects.market_type import MarketType
-from ...domain.services.calculation_service import CalculationService
+# from ...domain.entities.pick import Pick
+# from ...domain.entities.surebet import Surebet
 
 
 @dataclass
 class PickDTO:
     """
-    Data Transfer Object for Pick data.
+    Data Transfer Object for converting API data to domain entities.
     
-    Handles transformation from API response to domain entity.
+    Handles the complex structure of API responses:
+    - prongs array with bookmaker data
+    - type dict with market info
+    - Determining sharp vs soft roles
+    
+    TODO: Implement based on:
+    - Task 6.1 in docs/05-Implementation.md
+    - API response structure in legacy/RetadorV6.py
     """
     
-    id: str
-    teams: tuple[str, str]
+    # Raw data fields
+    teams: List[str]
+    event_time: int
+    profit: float
     tournament: str
-    event_time: int  # Unix timestamp in milliseconds
+    sport_id: str
+    
+    # Prong data
+    sharp_bookmaker: str
+    sharp_odds: float
+    soft_bookmaker: str
+    soft_odds: float
+    
+    # Market info
     market_type: str
     variety: str
-    soft_odds: float
-    sharp_odds: float
-    profit: float
-    bookmaker: str
-    sharp_bookmaker: str
-    sport: str
+    condition: Optional[str] = None
+    period: Optional[str] = None
+    
+    # Links
     link: Optional[str] = None
     
     @classmethod
     def from_api_response(cls, data: dict) -> "PickDTO":
-        """Create DTO from API response data."""
-        # Extract prongs
-        prongs = data.get("prongs", [])
+        """
+        Create DTO from raw API response.
         
-        # Find sharp and soft prongs
-        sharp_prong = None
-        soft_prong = None
+        Must determine which prong is sharp and which is soft
+        based on bookmaker hierarchy.
         
-        for prong in prongs:
-            bookie = prong.get("bookie_name", "").lower()
-            if bookie == "pinnaclesports":
-                sharp_prong = prong
-            else:
-                soft_prong = prong
+        Args:
+            data: Raw API response with 'prongs' array
+            
+        Returns:
+            PickDTO instance
         
-        if not sharp_prong or not soft_prong:
-            raise ValueError("Invalid surebet structure: missing prong")
-        
-        # Extract type info from target prong
-        type_info = soft_prong.get("type", {})
-        
-        return cls(
-            id=str(data.get("id", "")),
-            teams=(
-                data.get("teams", ["", ""])[0],
-                data.get("teams", ["", ""])[1]
-            ),
-            tournament=data.get("tournament", ""),
-            event_time=int(data.get("time", 0)),
-            market_type=type_info.get("type", ""),
-            variety=type_info.get("variety", ""),
-            soft_odds=float(soft_prong.get("odd", 0)),
-            sharp_odds=float(sharp_prong.get("odd", 0)),
-            profit=float(data.get("profit", 0)),
-            bookmaker=soft_prong.get("bookie_name", ""),
-            sharp_bookmaker=sharp_prong.get("bookie_name", ""),
-            sport=data.get("sport", ""),
-            link=soft_prong.get("link"),
-        )
+        Reference: 
+        - determine_bet_roles() logic in legacy/RetadorV6.py
+        - BOOKIE_HIERARCHY in BotConfig
+        """
+        raise NotImplementedError("PickDTO.from_api_response not implemented")
     
-    def to_entity(self, calculation_service: CalculationService) -> Pick:
-        """Convert DTO to Pick domain entity."""
-        sharp_odds = Odds(self.sharp_odds)
-        soft_odds = Odds(self.soft_odds)
+    def to_entity(self):  # -> Pick:
+        """
+        Convert DTO to domain Pick entity.
         
-        # Calculate minimum odds
-        min_odds = calculation_service.calculate_min_odds(
-            sharp_odds,
-            self.sharp_bookmaker
-        )
+        Returns:
+            Pick domain entity
+        """
+        raise NotImplementedError("PickDTO.to_entity not implemented")
+    
+    def to_surebet(self):  # -> Surebet:
+        """
+        Convert DTO to domain Surebet entity.
         
-        # Convert timestamp (ms to datetime)
-        event_datetime = datetime.fromtimestamp(self.event_time / 1000)
-        
-        return Pick(
-            id=self.id,
-            teams=self.teams,
-            tournament=self.tournament,
-            event_time=event_datetime,
-            market_type=MarketType(self.market_type),
-            variety=self.variety,
-            odds=soft_odds,
-            min_odds=min_odds,
-            profit=Profit(self.profit),
-            bookmaker=self.bookmaker,
-            sharp_bookmaker=self.sharp_bookmaker,
-            sharp_odds=sharp_odds,
-            sport=self.sport,
-            link=self.link,
-        )
+        Returns:
+            Surebet domain entity
+        """
+        raise NotImplementedError("PickDTO.to_surebet not implemented")
