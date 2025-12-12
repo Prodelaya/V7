@@ -1,11 +1,24 @@
-"""Tests for odds calculators."""
+"""Tests for stake and min_odds calculators.
+
+Test Requirements:
+- PinnacleCalculator.calculate_stake() for each profit range
+- PinnacleCalculator.calculate_min_odds() with reference values
+- CalculatorFactory.get_calculator() returns correct type
+
+Reference:
+- docs/05-Implementation.md: Task 2.5
+- docs/03-ADRs.md: ADR-003 (correct min_odds formula)
+- docs/01-SRS.md: Appendix 6.2 (reference values)
+
+TODO: Implement calculator tests
+"""
 
 import pytest
 
-from src.domain.value_objects.odds import Odds
-from src.domain.value_objects.profit import Profit
-from src.domain.services.calculators.pinnacle import PinnacleCalculator
-from src.domain.services.calculators.factory import CalculatorFactory
+# TODO: Import when implemented
+# from src.domain.services.calculators.pinnacle import PinnacleCalculator
+# from src.domain.services.calculators.factory import CalculatorFactory
+# from src.domain.services.calculators.base import StakeResult, MinOddsResult
 
 
 class TestPinnacleCalculator:
@@ -13,78 +26,120 @@ class TestPinnacleCalculator:
     
     def setup_method(self):
         """Set up test fixtures."""
-        self.calculator = PinnacleCalculator()
+        # TODO: Initialize calculator when implemented
+        # self.calculator = PinnacleCalculator()
+        pass
     
-    def test_calculate_min_odds_standard(self):
-        """Test minimum odds calculation with standard input."""
-        sharp_odds = Odds(2.00)
-        min_odds = self.calculator.calculate_min_odds(sharp_odds, target_profit=-1.0)
-        
-        # Formula: 1 / (1 + (-0.01) - 1/2.00) = 1 / (0.99 - 0.5) = 1 / 0.49 ≈ 2.04
-        assert 2.00 <= min_odds.value <= 2.10
+    # Stake calculation tests (SRS RF-005)
     
-    def test_calculate_min_odds_low_odds(self):
-        """Test minimum odds with low sharp odds."""
-        sharp_odds = Odds(1.50)
-        min_odds = self.calculator.calculate_min_odds(sharp_odds, target_profit=-1.0)
-        
-        # Should be higher than sharp odds for low values
-        assert min_odds.value > 2.5
+    def test_calculate_stake_low_profit_returns_red_emoji(self):
+        """Profit -0.8% should return 🔴 (low confidence)."""
+        # profit = -0.8
+        # result = self.calculator.calculate_stake(profit)
+        # assert result.emoji == "🔴"
+        # assert result.confidence == 0.25
+        raise NotImplementedError("Test not implemented")
     
-    def test_calculate_min_odds_high_odds(self):
-        """Test minimum odds with high sharp odds."""
-        sharp_odds = Odds(5.00)
-        min_odds = self.calculator.calculate_min_odds(sharp_odds, target_profit=-1.0)
-        
-        # Should be lower for high sharp odds
-        assert min_odds.value < 1.30
+    def test_calculate_stake_medium_low_profit_returns_orange_emoji(self):
+        """Profit 0.5% should return 🟠 (medium-low confidence)."""
+        # profit = 0.5
+        # result = self.calculator.calculate_stake(profit)
+        # assert result.emoji == "🟠"
+        raise NotImplementedError("Test not implemented")
     
-    def test_calculate_value_positive_profit(self):
-        """Test profit calculation with profitable surebet."""
-        soft_odds = Odds(2.10)
-        sharp_odds = Odds(2.00)
-        
-        profit = self.calculator.calculate_value(soft_odds, sharp_odds)
-        
-        # Combined probability > 1 means positive profit
-        assert isinstance(profit, Profit)
-        assert profit.value > 0
+    def test_calculate_stake_medium_high_profit_returns_yellow_emoji(self):
+        """Profit 2.5% should return 🟡 (medium-high confidence)."""
+        # profit = 2.5
+        # result = self.calculator.calculate_stake(profit)
+        # assert result.emoji == "🟡"
+        raise NotImplementedError("Test not implemented")
     
-    def test_calculate_value_negative_profit(self):
-        """Test profit calculation with negative surebet."""
-        soft_odds = Odds(1.90)
-        sharp_odds = Odds(2.00)
-        
-        profit = self.calculator.calculate_value(soft_odds, sharp_odds)
-        
-        # Combined probability < 1 means negative profit
-        assert profit.value < 0
+    def test_calculate_stake_high_profit_returns_green_emoji(self):
+        """Profit 5% should return 🟢 (high confidence)."""
+        # profit = 5.0
+        # result = self.calculator.calculate_stake(profit)
+        # assert result.emoji == "🟢"
+        raise NotImplementedError("Test not implemented")
+    
+    def test_calculate_stake_below_minimum_returns_none(self):
+        """Profit -2% (below -1%) should return None."""
+        # profit = -2.0
+        # result = self.calculator.calculate_stake(profit)
+        # assert result is None
+        raise NotImplementedError("Test not implemented")
+    
+    def test_calculate_stake_above_maximum_returns_none(self):
+        """Profit 30% (above 25%) should return None."""
+        # profit = 30.0
+        # result = self.calculator.calculate_stake(profit)
+        # assert result is None
+        raise NotImplementedError("Test not implemented")
+    
+    # Min odds calculation tests (ADR-003, Appendix 6.2)
+    # Using CORRECT formula: min_odds = 1 / (1.01 - 1/sharp_odds)
+    
+    def test_calculate_min_odds_sharp_150(self):
+        """Sharp odds 1.50 → min soft 2.92."""
+        # result = self.calculator.calculate_min_odds(1.50)
+        # assert abs(result.min_odds - 2.92) < 0.05
+        raise NotImplementedError("Test not implemented")
+    
+    def test_calculate_min_odds_sharp_180(self):
+        """Sharp odds 1.80 → min soft 2.20."""
+        # result = self.calculator.calculate_min_odds(1.80)
+        # assert abs(result.min_odds - 2.20) < 0.05
+        raise NotImplementedError("Test not implemented")
+    
+    def test_calculate_min_odds_sharp_200(self):
+        """Sharp odds 2.00 → min soft 1.96."""
+        # result = self.calculator.calculate_min_odds(2.00)
+        # assert abs(result.min_odds - 1.96) < 0.05
+        raise NotImplementedError("Test not implemented")
+    
+    def test_calculate_min_odds_sharp_205(self):
+        """Sharp odds 2.05 → min soft 1.92."""
+        # result = self.calculator.calculate_min_odds(2.05)
+        # assert abs(result.min_odds - 1.92) < 0.05
+        raise NotImplementedError("Test not implemented")
+    
+    def test_calculate_min_odds_sharp_250(self):
+        """Sharp odds 2.50 → min soft 1.64."""
+        # result = self.calculator.calculate_min_odds(2.50)
+        # assert abs(result.min_odds - 1.64) < 0.05
+        raise NotImplementedError("Test not implemented")
+    
+    def test_calculate_min_odds_sharp_300(self):
+        """Sharp odds 3.00 → min soft 1.48."""
+        # result = self.calculator.calculate_min_odds(3.00)
+        # assert abs(result.min_odds - 1.48) < 0.05
+        raise NotImplementedError("Test not implemented")
 
 
 class TestCalculatorFactory:
     """Tests for CalculatorFactory."""
     
+    def setup_method(self):
+        """Set up test fixtures."""
+        # TODO: Initialize factory when implemented
+        # self.factory = CalculatorFactory()
+        pass
+    
     def test_get_pinnacle_calculator(self):
-        """Test getting Pinnacle calculator."""
-        factory = CalculatorFactory()
-        
-        calculator = factory.get_calculator("pinnaclesports")
-        
-        assert isinstance(calculator, PinnacleCalculator)
+        """Factory returns PinnacleCalculator for 'pinnaclesports'."""
+        # calculator = self.factory.get_calculator("pinnaclesports")
+        # assert isinstance(calculator, PinnacleCalculator)
+        raise NotImplementedError("Test not implemented")
     
     def test_get_calculator_case_insensitive(self):
-        """Test that bookmaker lookup is case insensitive."""
-        factory = CalculatorFactory()
-        
-        calc1 = factory.get_calculator("PINNACLESPORTS")
-        calc2 = factory.get_calculator("pinnaclesports")
-        
-        assert calc1 is calc2
+        """Factory handles case variations."""
+        # calc1 = self.factory.get_calculator("PinnacleSports")
+        # calc2 = self.factory.get_calculator("PINNACLESPORTS")
+        # assert isinstance(calc1, PinnacleCalculator)
+        # assert isinstance(calc2, PinnacleCalculator)
+        raise NotImplementedError("Test not implemented")
     
-    def test_default_calculator(self):
-        """Test that unknown bookmaker returns default calculator."""
-        factory = CalculatorFactory()
-        
-        calculator = factory.get_calculator("unknown_bookmaker")
-        
-        assert isinstance(calculator, PinnacleCalculator)
+    def test_get_unknown_returns_default(self):
+        """Factory returns default for unknown bookmaker."""
+        # calculator = self.factory.get_calculator("unknown_bookie")
+        # assert calculator is not None  # Default calculator
+        raise NotImplementedError("Test not implemented")

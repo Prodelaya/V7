@@ -1,89 +1,111 @@
 """Integration tests for Redis repository.
 
-These tests require a running Redis instance.
-Skip if Redis is not available.
+Test Requirements:
+- Test with real Redis (docker-compose)
+- exists() / exists_any() behavior
+- set() / set_batch() with TTL
+- Cursor persistence
+- NO Bloom Filter (verify exact matches only)
+
+Reference:
+- docs/05-Implementation.md: Task 5.3
+- docs/03-ADRs.md: ADR-004, ADR-012
+
+TODO: Implement Redis integration tests
 """
 
 import pytest
-import asyncio
-from typing import AsyncGenerator
 
-try:
-    from redis import asyncio as aioredis
-    REDIS_AVAILABLE = True
-except ImportError:
-    REDIS_AVAILABLE = False
-
-from src.infrastructure.repositories.redis_repository import RedisRepository
+# TODO: Import when implemented
+# from src.infrastructure.repositories.redis_repository import RedisRepository
 
 
 @pytest.fixture
-async def redis_repository() -> AsyncGenerator[RedisRepository, None]:
-    """Create Redis repository for testing."""
-    repo = RedisRepository(
-        host="localhost",
-        port=6379,
-        password="",
-        db=15,  # Use test database
-    )
-    yield repo
-    await repo.close()
+async def redis_repo():
+    """Create Redis repository connected to test database."""
+    # repo = RedisRepository(
+    #     host="localhost",
+    #     port=6379,
+    #     db=15,  # Separate test database
+    # )
+    # yield repo
+    # await repo.close()
+    raise NotImplementedError("Fixture not implemented")
 
 
-@pytest.mark.skipif(not REDIS_AVAILABLE, reason="Redis not available")
 class TestRedisRepository:
     """Integration tests for RedisRepository."""
     
     @pytest.mark.asyncio
-    async def test_set_and_exists(self, redis_repository):
-        """Test setting and checking existence."""
-        key = "test:pick:123"
-        
-        success = await redis_repository.set(key, "1", ttl=60)
-        exists = await redis_repository.exists(key)
-        
-        assert success is True
-        assert exists is True
-        
-        # Cleanup
-        await redis_repository.delete(key)
+    async def test_set_and_exists(self, redis_repo):
+        """set() should make exists() return True."""
+        # await redis_repo.set("test:key", "value", ttl=60)
+        # assert await redis_repo.exists("test:key")
+        raise NotImplementedError("Test not implemented")
     
     @pytest.mark.asyncio
-    async def test_exists_not_found(self, redis_repository):
-        """Test exists returns false for missing key."""
-        exists = await redis_repository.exists("nonexistent:key:999")
-        
-        assert exists is False
+    async def test_nonexistent_key_returns_false(self, redis_repo):
+        """exists() should return False for missing key."""
+        # assert not await redis_repo.exists("nonexistent:key")
+        raise NotImplementedError("Test not implemented")
     
     @pytest.mark.asyncio
-    async def test_exists_any_some_exist(self, redis_repository):
-        """Test exists_any when some keys exist."""
-        key1 = "test:pick:1"
-        await redis_repository.set(key1, "1", ttl=60)
-        
-        keys = [key1, "nonexistent:1", "nonexistent:2"]
-        exists = await redis_repository.exists_any(keys)
-        
-        assert exists is True
-        
-        # Cleanup
-        await redis_repository.delete(key1)
+    async def test_exists_any_with_one_match(self, redis_repo):
+        """exists_any() should return True if any key matches."""
+        # await redis_repo.set("test:exists", "value", ttl=60)
+        # keys = ["test:missing1", "test:exists", "test:missing2"]
+        # assert await redis_repo.exists_any(keys)
+        raise NotImplementedError("Test not implemented")
     
     @pytest.mark.asyncio
-    async def test_exists_any_none_exist(self, redis_repository):
-        """Test exists_any when no keys exist."""
-        keys = ["nonexistent:1", "nonexistent:2", "nonexistent:3"]
-        
-        exists = await redis_repository.exists_any(keys)
-        
-        assert exists is False
+    async def test_exists_any_with_no_match(self, redis_repo):
+        """exists_any() should return False if no key matches."""
+        # keys = ["test:missing1", "test:missing2", "test:missing3"]
+        # assert not await redis_repo.exists_any(keys)
+        raise NotImplementedError("Test not implemented")
     
     @pytest.mark.asyncio
-    async def test_cursor_persistence(self, redis_repository):
-        """Test cursor save and retrieve."""
-        cursor = "created_at:12345"
+    async def test_set_batch(self, redis_repo):
+        """set_batch() should set multiple keys atomically."""
+        # items = [
+        #     ("test:batch1", "v1", 60),
+        #     ("test:batch2", "v2", 60),
+        #     ("test:batch3", "v3", 60),
+        # ]
+        # await redis_repo.set_batch(items)
+        # assert await redis_repo.exists("test:batch1")
+        # assert await redis_repo.exists("test:batch2")
+        # assert await redis_repo.exists("test:batch3")
+        raise NotImplementedError("Test not implemented")
+    
+    @pytest.mark.asyncio
+    async def test_ttl_expiration(self, redis_repo):
+        """Key should expire after TTL."""
+        # await redis_repo.set("test:ttl", "value", ttl=1)
+        # assert await redis_repo.exists("test:ttl")
+        # await asyncio.sleep(1.5)
+        # assert not await redis_repo.exists("test:ttl")
+        raise NotImplementedError("Test not implemented")
+    
+    @pytest.mark.asyncio
+    async def test_cursor_persistence(self, redis_repo):
+        """Cursor should persist and be retrievable."""
+        # cursor = "created_at:12345"
+        # await redis_repo.set_cursor(cursor)
+        # retrieved = await redis_repo.get_cursor()
+        # assert retrieved == cursor
+        raise NotImplementedError("Test not implemented")
+    
+    @pytest.mark.asyncio
+    async def test_no_false_positives(self, redis_repo):
+        """
+        Verify NO false positives (ADR-012).
         
-        await redis_repository.set_cursor(cursor)
-        retrieved = await redis_repository.get_cursor()
-        
-        assert retrieved == cursor
+        Different keys should not be reported as existing.
+        This is why we don't use Bloom Filters.
+        """
+        # await redis_repo.set("test:exact:key:123", "value", ttl=60)
+        # # Similar but different key should NOT match
+        # assert not await redis_repo.exists("test:exact:key:124")
+        # assert not await redis_repo.exists("test:exact:key:12")
+        raise NotImplementedError("Test not implemented")
