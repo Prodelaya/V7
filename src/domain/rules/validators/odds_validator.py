@@ -12,7 +12,7 @@ class OddsValidator(BaseValidator):
     Default range: 1.10 to 9.99
     """
     
-    def __init__(self, min_odds: float = 1.10, max_odds: float = 9.99):
+    def __init__(self, min_odds: float, max_odds: float):
         self._min_odds = min_odds
         self._max_odds = max_odds
     

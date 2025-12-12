@@ -1,78 +1,137 @@
-"""Pinnacle-specific odds calculator."""
+"""Pinnacle-specific calculator implementation."""
 
-from ...value_objects.odds import Odds
-from ...value_objects.profit import Profit
-from .base import BaseCalculator
+from typing import Optional
+
+from .base import BaseCalculator, StakeResult, MinOddsResult
 
 
 class PinnacleCalculator(BaseCalculator):
     """
-    Calculator for Pinnacle Sports.
+    Calculator strategy for Pinnacle Sports as sharp bookmaker.
     
-    Pinnacle has approximately 2-3% margin on most markets.
-    Formula: min_odds = 1 / (1 + target_profit/100 - 1/sharp_odds)
+    Pinnacle is considered the market reference due to:
+    - Low margins (~2-3%)
+    - Winners accepted policy
+    - Efficient odds that reflect true probabilities
+    
+    Stake ranges are based on surebet profit percentage:
+    - 🔴 Low confidence: -1% to -0.5% profit
+    - 🟠 Medium-low: -0.5% to 1.5% profit  
+    - 🟡 Medium-high: 1.5% to 4% profit
+    - 🟢 High confidence: >4% profit
     """
     
-    PINNACLE_MARGIN = 0.025  # 2.5% average margin
+    # Profit ranges for stake calculation
+    # (min_profit, max_profit, emoji, confidence, units)
+    PROFIT_RANGES = [
+        (-1.0, -0.5, "🔴", 0.25, (0.5, 1.0, 1.5)),
+        (-0.5,  1.5, "🟠", 0.50, (1.0, 1.5, 2.0)),
+        ( 1.5,  4.0, "🟡", 0.75, (1.5, 2.0, 3.0)),
+        ( 4.0, 25.0, "🟢", 1.00, (2.0, 3.0, 4.0)),
+    ]
+    
+    # Profit limits
+    MIN_PROFIT = -1.0   # Minimum acceptable profit (%)
+    MAX_PROFIT = 25.0   # Maximum acceptable profit (%)
+    
+    # Profit threshold for min_odds calculation
+    PROFIT_THRESHOLD = -0.01  # -1% as decimal
     
     @property
-    def bookmaker_name(self) -> str:
+    def name(self) -> str:
+        """Identifier for Pinnacle."""
         return "pinnaclesports"
     
-    @property
-    def margin(self) -> float:
-        return self.PINNACLE_MARGIN
-    
-    def calculate_min_odds(
-        self,
-        sharp_odds: Odds,
-        target_profit: float = -1.0
-    ) -> Odds:
+    def calculate_stake(self, profit: float) -> Optional[StakeResult]:
         """
-        Calculate minimum acceptable odds for soft bookmaker.
-        
-        Uses formula: min_odds = 1 / (1 + target_profit/100 - 1/sharp_odds)
-        For target_profit = -1%: min_odds = 1 / (1.01 - 1/sharp_odds)
+        Calculate recommended stake based on surebet profit.
         
         Args:
-            sharp_odds: Pinnacle odds
-            target_profit: Minimum acceptable profit (default -1%)
+            profit: Surebet profit percentage (e.g., 2.5 means 2.5%)
             
         Returns:
-            Minimum odds needed in soft bookmaker
+            StakeResult with emoji and unit suggestions, or None if invalid
+            
+        Examples:
+            >>> calc = PinnacleCalculator()
+            >>> result = calc.calculate_stake(2.5)
+            >>> result.emoji
+            '🟡'
+            >>> result.units_suggestion
+            (1.5, 2.0, 3.0)
         """
-        # Convert percentage to decimal (e.g., -1 -> -0.01)
-        profit_decimal = target_profit / 100
+        if not self.is_valid_profit(profit):
+            return None
         
-        # Calculate denominator
-        denominator = 1 + profit_decimal - (1 / sharp_odds.value)
+        for min_p, max_p, emoji, confidence, units in self.PROFIT_RANGES:
+            if min_p <= profit <= max_p:
+                return StakeResult(
+                    emoji=emoji,
+                    confidence=confidence,
+                    units_suggestion=units
+                )
         
-        # Handle edge cases
-        if denominator <= 0:
-            return Odds(Odds.MAX_ODDS)
-        
-        min_odds_value = 1 / denominator
-        
-        # Clamp to valid range
-        min_odds_value = max(Odds.MIN_ODDS, min(Odds.MAX_ODDS, min_odds_value))
-        
-        return Odds(round(min_odds_value, 2))
+        return None  # Should not reach here if ranges are complete
     
-    def calculate_value(self, soft_odds: Odds, sharp_odds: Odds) -> Profit:
+    def calculate_min_odds(self, sharp_odds: float) -> MinOddsResult:
         """
-        Calculate expected value/profit percentage.
+        Calculate minimum acceptable odds in soft bookmaker to maintain -1% value.
         
-        Formula: profit = (1/sharp_odds + 1/soft_odds - 1) * 100
+        Formula derivation:
+            profit = 1 - (1/odd_sharp + 1/odd_soft)
+            For profit = -0.01 (-1%):
+            -0.01 = 1 - (1/odd_sharp + 1/odd_soft)
+            1/odd_soft = 1.01 - 1/odd_sharp
+            odd_soft = 1 / (1.01 - 1/odd_sharp)
         
         Args:
-            soft_odds: Odds from soft bookmaker
-            sharp_odds: Odds from Pinnacle
+            sharp_odds: Odds of the OPPOSITE market in Pinnacle
             
         Returns:
-            Profit percentage as Profit value object
+            MinOddsResult with minimum acceptable odds
+            
+        Examples:
+            >>> calc = PinnacleCalculator()
+            >>> result = calc.calculate_min_odds(2.05)
+            >>> result.min_odds
+            1.92
         """
-        # Surebet profit formula
-        combined_probability = (1 / sharp_odds.value) + (1 / soft_odds.value)
-        profit_value = (combined_probability - 1) * 100
+        try:
+            # Formula: min_odds = 1 / (1 - profit_threshold - 1/sharp_odds)
+            # With profit_threshold = -0.01:
+            # min_odds = 1 / (1 - (-0.01) - 1/sharp_odds)
+            # min_odds = 1 / (1.01 - 1/sharp_odds)
+            
+            denominator = (1 - self.PROFIT_THRESHOLD) - (1 / sharp_odds)
+            
+            if denominator <= 0:
+                # Sharp odds too low, would need impossible soft odds
+                return MinOddsResult(
+                    min_odds=99.99,
+                    profit_threshold=self.PROFIT_THRESHOLD
+                )
+            
+            min_odds = 1 / denominator
+            
+            return MinOddsResult(
+                min_odds=round(min_odds, 2),
+                profit_threshold=self.PROFIT_THRESHOLD
+            )
+            
+        except (ZeroDivisionError, ValueError):
+            return MinOddsResult(
+                min_odds=99.99,
+                profit_threshold=self.PROFIT_THRESHOLD
+            )
+    
+    def is_valid_profit(self, profit: float) -> bool:
+        """
+        Check if profit is within acceptable range.
         
-        return Profit(round(profit_value, 2))
+        Args:
+            profit: Surebet profit percentage
+            
+        Returns:
+            True if -1% <= profit <= 25%
+        """
+        return self.MIN_PROFIT <= profit <= self.MAX_PROFIT
