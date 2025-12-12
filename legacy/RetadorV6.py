@@ -1542,15 +1542,15 @@ class TelegramSender:
         
         # Mapeo de canales a nombres para logging mÃ¡s descriptivo
         channel_names = {
-            REDACTED_CHANNEL_ID_1: "retabet_apuestas",
-            REDACTED_CHANNEL_ID_2: "bet365",
-            REDACTED_CHANNEL_ID_3: "winamax_es",
-            REDACTED_CHANNEL_ID_4: "yaasscasino",
-            REDACTED_CHANNEL_ID_5: "bwin",
-            REDACTED_CHANNEL_ID_6: 'sportium',
-            #REDACTED_CHANNEL_ID_8: 'caliente',
-            REDACTED_CHANNEL_ID_9: 'betway',
-            REDACTED_CHANNEL_ID_11: 'versus'
+            -1002294438792: "retabet_apuestas",
+            -1002482485894: "bet365",
+            -1002489999052: "winamax_es",
+            -1002360901387: "yaasscasino",
+            -1002431708758: "bwin",
+            -1002359893431: 'sportium',
+            #-1002267476497: 'caliente',
+            -1002446566564: 'betway',
+            -1002571244724: 'versus'
         }
         
         channel_name = channel_names.get(channel_id, str(channel_id))
