@@ -1,27 +1,30 @@
-"""Shared utilities and types."""
+"""Shared package - Common utilities.
+
+Contains:
+- exceptions: Custom exception classes
+- constants: Global constants
+
+Reference: docs/04-Structure.md
+"""
 
 from .exceptions import (
     RetadorError,
+    InvalidOddsError,
+    InvalidProfitError,
     ValidationError,
-    APIError,
-    RateLimitError,
-    DuplicatePickError,
+    ApiError,
+    RedisError,
 )
 from .constants import (
-    DEFAULT_MIN_ODDS,
-    DEFAULT_MAX_ODDS,
-    DEFAULT_MIN_PROFIT,
-    DEFAULT_MAX_PROFIT,
+    STAKE_EMOJIS,
 )
 
 __all__ = [
     "RetadorError",
-    "ValidationError", 
-    "APIError",
-    "RateLimitError",
-    "DuplicatePickError",
-    "DEFAULT_MIN_ODDS",
-    "DEFAULT_MAX_ODDS",
-    "DEFAULT_MIN_PROFIT",
-    "DEFAULT_MAX_PROFIT",
+    "InvalidOddsError",
+    "InvalidProfitError",
+    "ValidationError",
+    "ApiError",
+    "RedisError",
+    "STAKE_EMOJIS",
 ]

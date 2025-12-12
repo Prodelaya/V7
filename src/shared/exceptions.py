@@ -1,48 +1,53 @@
-"""Custom exceptions for the Retador system."""
+"""Custom exception classes.
+
+Implementation Requirements:
+- Base RetadorError class
+- Domain-specific exceptions (odds, profit, validation)
+- Infrastructure exceptions (API, Redis)
+
+Reference:
+- docs/05-Implementation.md: Task 1.1
+
+TODO: Implement exception classes
+"""
 
 
 class RetadorError(Exception):
-    """Base exception for all Retador errors."""
+    """Base exception for Retador application."""
+    pass
+
+
+class InvalidOddsError(RetadorError):
+    """Raised when odds are outside valid range."""
+    pass
+
+
+class InvalidProfitError(RetadorError):
+    """Raised when profit is outside valid range."""
     pass
 
 
 class ValidationError(RetadorError):
     """Raised when pick validation fails."""
     
-    def __init__(self, message: str, validator: str = None):
+    def __init__(self, message: str, validator: str = ""):
         super().__init__(message)
         self.validator = validator
 
 
-class APIError(RetadorError):
+class ApiError(RetadorError):
     """Raised when API request fails."""
     
-    def __init__(self, message: str, status_code: int = None):
+    def __init__(self, message: str, status_code: int = 0):
         super().__init__(message)
         self.status_code = status_code
 
 
-class RateLimitError(APIError):
-    """Raised when rate limit is exceeded."""
-    
-    def __init__(self, retry_after: int = 0):
-        super().__init__(f"Rate limit exceeded, retry after {retry_after}s")
-        self.retry_after = retry_after
-
-
-class DuplicatePickError(RetadorError):
-    """Raised when a duplicate pick is detected."""
-    
-    def __init__(self, key: str):
-        super().__init__(f"Duplicate pick: {key}")
-        self.key = key
-
-
-class ConnectionError(RetadorError):
-    """Raised when connection to external service fails."""
+class RedisError(RetadorError):
+    """Raised when Redis operation fails."""
     pass
 
 
-class ConfigurationError(RetadorError):
-    """Raised when configuration is invalid."""
+class TelegramError(RetadorError):
+    """Raised when Telegram operation fails."""
     pass

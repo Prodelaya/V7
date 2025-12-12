@@ -1,1 +1,1 @@
-"""Retador - Value Betting System."""
+"""RetadorV7 - Value Betting Detection System."""

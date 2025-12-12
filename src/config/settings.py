@@ -1,8 +1,21 @@
-"""Application settings with environment variable support."""
+"""Application settings with environment variable support.
+
+Implementation Requirements:
+- Load from environment variables with defaults
+- Use Pydantic or dataclasses
+- Group related settings (API, Redis, Telegram, Polling, Validation)
+
+Reference:
+- docs/05-Implementation.md: Task 4.1
+- docs/02-PDR.md: Section 6.1 (Variables de Entorno)
+- .env.example for variable list
+
+TODO: Implement Settings
+"""
 
 import os
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -30,11 +43,12 @@ class TelegramSettings:
     """Telegram bot settings."""
     tokens: List[str] = field(default_factory=list)
     log_channel_id: int = 0
+    max_queue_size: int = 1000
 
 
 @dataclass
 class PollingSettings:
-    """API polling settings."""
+    """API polling settings (from ADR-010)."""
     base_interval: float = 0.5
     max_interval: float = 5.0
     requests_per_second: int = 2
@@ -42,7 +56,7 @@ class PollingSettings:
 
 @dataclass
 class ValidationSettings:
-    """Pick validation settings."""
+    """Pick validation settings (from SRS RF-003)."""
     min_odds: float = 1.10
     max_odds: float = 9.99
     min_profit: float = -1.0
@@ -56,6 +70,18 @@ class Settings:
     Application settings container.
     
     Load from environment variables with fallback defaults.
+    
+    Environment variables (from docs/02-PDR.md Section 6.1):
+    - API: API_URL, API_TOKEN, API_TIMEOUT
+    - Redis: REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_USERNAME
+    - Telegram: TELEGRAM_BOT_TOKENS, TELEGRAM_LOG_CHANNEL
+    - Polling: POLLING_BASE_INTERVAL, POLLING_MAX_INTERVAL
+    - Validation: MIN_ODDS, MAX_ODDS, MIN_PROFIT, MAX_PROFIT
+    
+    TODO: Implement based on:
+    - Task 4.1 in docs/05-Implementation.md
+    - Section 6.1 in docs/02-PDR.md
+    - BotConfig in legacy/RetadorV6.py (line 250)
     """
     
     api: APISettings = field(default_factory=APISettings)
@@ -83,40 +109,10 @@ class Settings:
     
     @classmethod
     def from_env(cls) -> "Settings":
-        """Load settings from environment variables."""
-        settings = cls()
+        """
+        Load settings from environment variables.
         
-        # API settings
-        settings.api.url = os.getenv("API_URL", settings.api.url)
-        settings.api.token = os.getenv("API_TOKEN", "")
-        settings.api.timeout = int(os.getenv("API_TIMEOUT", "30"))
-        
-        # Redis settings
-        settings.redis.host = os.getenv("REDIS_HOST", "localhost")
-        settings.redis.port = int(os.getenv("REDIS_PORT", "6379"))
-        settings.redis.password = os.getenv("REDIS_PASSWORD", "")
-        settings.redis.username = os.getenv("REDIS_USERNAME", "")
-        
-        # Telegram settings
-        tokens = os.getenv("TELEGRAM_BOT_TOKENS", "")
-        if tokens:
-            settings.telegram.tokens = tokens.split(",")
-        settings.telegram.log_channel_id = int(
-            os.getenv("TELEGRAM_LOG_CHANNEL", "0")
-        )
-        
-        # Polling settings
-        settings.polling.base_interval = float(
-            os.getenv("POLLING_BASE_INTERVAL", "0.5")
-        )
-        settings.polling.max_interval = float(
-            os.getenv("POLLING_MAX_INTERVAL", "5.0")
-        )
-        
-        # Validation settings
-        settings.validation.min_odds = float(os.getenv("MIN_ODDS", "1.10"))
-        settings.validation.max_odds = float(os.getenv("MAX_ODDS", "9.99"))
-        settings.validation.min_profit = float(os.getenv("MIN_PROFIT", "-1.0"))
-        settings.validation.max_profit = float(os.getenv("MAX_PROFIT", "25.0"))
-        
-        return settings
+        Returns:
+            Settings instance with env values
+        """
+        raise NotImplementedError("Settings.from_env not implemented")

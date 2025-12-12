@@ -1,81 +1,79 @@
-"""Bookmaker configuration."""
+"""Bookmaker configuration and channel mappings.
+
+Implementation Requirements:
+- List of sharp bookmakers (Pinnacle)
+- List of soft bookmakers (targets)
+- Allowed contrapartidas mapping
+- Telegram channel IDs per bookmaker
+
+Reference:
+- docs/05-Implementation.md: Task 4.2
+- docs/01-SRS.md: Section 2.4 (Users and Characteristics)
+- legacy/RetadorV6.py: BotConfig (line 291-356)
+
+TODO: Implement BookmakerConfig
+"""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-
-from ..domain.entities.bookmaker import Bookmaker, BookmakerType
+from typing import Dict, List
 
 
 @dataclass
 class BookmakerConfig:
     """
-    Configuration for bookmakers and their relationships.
+    Bookmaker configuration.
     
-    Defines which bookmakers are sharps, softs, and their
-    allowed counterparts.
+    Contains:
+    - Sharp bookmakers (reference for odds)
+    - Soft bookmakers (targets for betting)
+    - Allowed contrapartidas per soft
+    - Telegram channel mappings
+    
+    TODO: Implement based on:
+    - Task 4.2 in docs/05-Implementation.md
+    - BotConfig in legacy/RetadorV6.py
     """
     
-    # Sharp bookmakers (reference odds)
-    sharps: List[Bookmaker] = field(default_factory=lambda: [
-        Bookmaker(
-            id="pinnaclesports",
-            name="Pinnacle Sports",
-            type=BookmakerType.SHARP,
-        ),
+    # Sharp bookmakers in priority order
+    # First found in surebet is the sharp reference
+    sharp_hierarchy: List[str] = field(default_factory=lambda: [
+        "pinnaclesports",
+        "bet365",
     ])
     
-    # Soft bookmakers (target for betting)
-    softs: List[Bookmaker] = field(default_factory=lambda: [
-        Bookmaker(
-            id="retabet_apuestas",
-            name="Retabet",
-            type=BookmakerType.SOFT,
-            telegram_channel_id=-1002294438792,
-            allowed_counterparts=["pinnaclesports"],
-        ),
-        Bookmaker(
-            id="yaasscasino",
-            name="Yaass Casino",
-            type=BookmakerType.SOFT,
-            telegram_channel_id=-1002360901387,
-            allowed_counterparts=["pinnaclesports"],
-        ),
+    # Soft bookmakers we send picks for
+    target_bookmakers: List[str] = field(default_factory=lambda: [
+        "retabet_apuestas",
+        "yaasscasino",
+        # Add more as needed
     ])
     
-    @property
-    def all_bookmakers(self) -> List[Bookmaker]:
-        """Get all configured bookmakers."""
-        return self.sharps + self.softs
+    # Which sharps are allowed for each soft
+    allowed_contrapartidas: Dict[str, List[str]] = field(default_factory=lambda: {
+        "retabet_apuestas": ["pinnaclesports"],
+        "yaasscasino": ["pinnaclesports"],
+        # Add more as needed
+    })
     
-    @property
-    def bookmaker_ids(self) -> List[str]:
-        """Get all bookmaker IDs for API query."""
-        return [b.id for b in self.all_bookmakers]
+    # Telegram channel ID per bookmaker
+    channel_mapping: Dict[str, int] = field(default_factory=lambda: {
+        "retabet_apuestas": 0,  # TODO: Add real channel IDs
+        "yaasscasino": 0,
+        # Add more as needed
+    })
     
-    @property
-    def soft_ids(self) -> List[str]:
-        """Get soft bookmaker IDs."""
-        return [b.id for b in self.softs]
+    def is_sharp(self, bookmaker: str) -> bool:
+        """Check if bookmaker is in sharp hierarchy."""
+        raise NotImplementedError("BookmakerConfig.is_sharp not implemented")
     
-    @property
-    def channel_mapping(self) -> Dict[str, int]:
-        """Get bookmaker to channel ID mapping."""
-        return {
-            b.id: b.telegram_channel_id
-            for b in self.softs
-            if b.telegram_channel_id
-        }
+    def is_target(self, bookmaker: str) -> bool:
+        """Check if bookmaker is a target soft."""
+        raise NotImplementedError("BookmakerConfig.is_target not implemented")
     
-    def get_bookmaker(self, bookmaker_id: str) -> Optional[Bookmaker]:
-        """Get bookmaker by ID."""
-        for bookmaker in self.all_bookmakers:
-            if bookmaker.id.lower() == bookmaker_id.lower():
-                return bookmaker
-        return None
+    def get_channel(self, bookmaker: str) -> int:
+        """Get Telegram channel ID for bookmaker."""
+        raise NotImplementedError("BookmakerConfig.get_channel not implemented")
     
-    def is_valid_pair(self, soft_id: str, sharp_id: str) -> bool:
-        """Check if soft/sharp pair is valid."""
-        soft = self.get_bookmaker(soft_id)
-        if not soft or soft.is_sharp:
-            return False
-        return soft.can_use_counterpart(sharp_id)
+    def is_valid_contrapartida(self, soft: str, sharp: str) -> bool:
+        """Check if sharp is allowed for this soft."""
+        raise NotImplementedError("BookmakerConfig.is_valid_contrapartida not implemented")

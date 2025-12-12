@@ -1,131 +1,84 @@
-"""Logging configuration."""
+"""Logging configuration with Telegram handler.
+
+Implementation Requirements:
+- Structured logging with levels
+- Telegram handler for alerts (WARNING+)
+- Duplicate message suppression
+- Log channel for errors
+
+Reference:
+- docs/05-Implementation.md: Task 4.3
+- docs/01-SRS.md: RNF-005 (Observabilidad)
+- legacy/RetadorV6.py: TelegramLogHandler (line 177)
+
+TODO: Implement LoggingConfig
+"""
 
 import logging
-import logging.handlers
-import sys
 from typing import Optional
-
-from aiogram import Bot
-from aiogram.enums import ParseMode
-
-
-def setup_logging(
-    level: int = logging.INFO,
-    log_file: Optional[str] = None,
-    telegram_bot_token: Optional[str] = None,
-    telegram_chat_id: Optional[int] = None,
-) -> logging.Logger:
-    """
-    Configure application logging.
-    
-    Args:
-        level: Logging level
-        log_file: Optional file path for file logging
-        telegram_bot_token: Optional bot token for Telegram alerts
-        telegram_chat_id: Optional chat ID for Telegram alerts
-        
-    Returns:
-        Configured root logger
-    """
-    # Format
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    
-    # Root logger
-    logger = logging.getLogger()
-    logger.setLevel(level)
-    
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-    
-    # File handler (optional)
-    if log_file:
-        file_handler = logging.handlers.TimedRotatingFileHandler(
-            log_file,
-            when="midnight",
-            interval=1,
-            backupCount=7,
-        )
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-    
-    # Telegram handler (optional)
-    if telegram_bot_token and telegram_chat_id:
-        telegram_handler = TelegramLogHandler(
-            bot_token=telegram_bot_token,
-            chat_id=telegram_chat_id,
-        )
-        telegram_handler.setLevel(logging.WARNING)
-        telegram_handler.setFormatter(formatter)
-        logger.addHandler(telegram_handler)
-    
-    return logger
 
 
 class TelegramLogHandler(logging.Handler):
     """
-    Logging handler that sends warnings and errors to Telegram.
+    Logging handler that sends messages to Telegram.
     
     Features:
-    - Deduplication (same message not sent within 30 minutes)
-    - HTML formatting
-    - Async sending
+    - Only sends WARNING and above
+    - Suppresses duplicate messages for timeout period
+    - Async-safe
+    
+    TODO: Implement based on:
+    - Task 4.3 in docs/05-Implementation.md
+    - TelegramLogHandler in legacy/RetadorV6.py (line 177)
     """
     
-    def __init__(self, bot_token: str, chat_id: int):
+    def __init__(
+        self,
+        bot_token: str,
+        chat_id: int,
+        min_level: int = logging.WARNING,
+        duplicate_timeout: int = 1800,  # 30 minutes
+    ):
+        """
+        Initialize handler.
+        
+        Args:
+            bot_token: Telegram bot token
+            chat_id: Chat/channel ID for logs
+            min_level: Minimum level to send (default WARNING)
+            duplicate_timeout: Seconds to suppress duplicate messages
+        """
         super().__init__()
-        self.bot_token = bot_token
-        self.chat_id = chat_id
-        self.duplicate_timeout = 1800  # 30 minutes
-        self._last_messages: dict = {}
+        self._bot_token = bot_token
+        self._chat_id = chat_id
+        self._min_level = min_level
+        self._duplicate_timeout = duplicate_timeout
+        self._last_messages = {}  # {hash: timestamp}
     
     def emit(self, record: logging.LogRecord) -> None:
-        """Send log record to Telegram."""
-        import asyncio
-        import html
-        import time
+        """
+        Send log record to Telegram if level >= min_level.
         
-        try:
-            msg = self.format(record)
-            current_time = time.time()
-            
-            # Deduplicate
-            msg_hash = hash(f"{record.levelname}:{record.message}")
-            if msg_hash in self._last_messages:
-                if current_time - self._last_messages[msg_hash] < self.duplicate_timeout:
-                    return
-            
-            self._last_messages[msg_hash] = current_time
-            
-            # Clean old entries
-            self._last_messages = {
-                k: v for k, v in self._last_messages.items()
-                if current_time - v < self.duplicate_timeout
-            }
-            
-            # Send async
-            asyncio.create_task(self._send(msg, record.levelname))
-            
-        except Exception:
-            self.handleError(record)
+        Suppresses duplicates within timeout.
+        """
+        raise NotImplementedError("TelegramLogHandler.emit not implemented")
+
+
+def setup_logging(
+    level: int = logging.INFO,
+    telegram_token: Optional[str] = None,
+    telegram_chat_id: Optional[int] = None,
+) -> None:
+    """
+    Configure application logging.
     
-    async def _send(self, msg: str, level: str) -> None:
-        """Send message to Telegram."""
-        import html
-        
-        bot = Bot(token=self.bot_token)
-        try:
-            emoji = "🔴" if level == "ERROR" else "🟡"
-            formatted = f"{emoji} <b>{level}</b>\n<pre>{html.escape(msg)}</pre>"
-            
-            await bot.send_message(
-                chat_id=self.chat_id,
-                text=formatted,
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True,
-            )
-        finally:
-            await bot.session.close()
+    Sets up:
+    - Console handler
+    - Optional Telegram handler for alerts
+    
+    Args:
+        level: Base logging level
+        telegram_token: Bot token for Telegram alerts
+        telegram_chat_id: Chat ID for Telegram alerts
+    """
+    raise NotImplementedError("setup_logging not implemented")

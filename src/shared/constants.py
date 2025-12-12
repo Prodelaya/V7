@@ -1,29 +1,44 @@
-"""Application constants."""
+"""Global constants.
 
-# Validation defaults
-DEFAULT_MIN_ODDS = 1.10
-DEFAULT_MAX_ODDS = 9.99
-DEFAULT_MIN_PROFIT = -1.0
-DEFAULT_MAX_PROFIT = 25.0
-DEFAULT_MIN_EVENT_TIME = 0  # seconds
+Contains:
+- Stake emojis
+- Date format strings
+- Other constants used across the application
 
-# Rate limiting
-DEFAULT_REQUESTS_PER_SECOND = 2
-DEFAULT_BASE_INTERVAL = 0.5  # seconds
-DEFAULT_MAX_INTERVAL = 5.0  # seconds
+Reference: docs/04-Structure.md
+"""
 
-# Cache settings
-DEFAULT_CACHE_TTL = 10  # seconds
-DEFAULT_CACHE_MAX_SIZE = 2000
+# Stake indicator emojis (from SRS RF-005)
+STAKE_EMOJIS = {
+    "low": "🔴",
+    "medium_low": "🟠",
+    "medium_high": "🟡",
+    "high": "🟢",
+}
 
-# Telegram
-DEFAULT_MAX_QUEUE_SIZE = 1000
-DEFAULT_MAX_RETRIES = 3
+# Spanish day names for date formatting
+SPANISH_DAYS = {
+    0: "Lunes",
+    1: "Martes",
+    2: "Miércoles",
+    3: "Jueves",
+    4: "Viernes",
+    5: "Sábado",
+    6: "Domingo",
+}
 
-# Redis
-DEFAULT_CURSOR_KEY = "retador:cursor"
-DEFAULT_PICK_PREFIX = "pick:"
+# Date format for messages
+DATE_FORMAT = "%d/%m/%Y"
+TIME_FORMAT = "%H:%M"
 
-# Processing
-DEFAULT_CONCURRENT_PICKS = 250
-DEFAULT_CONCURRENT_REQUESTS = 100
+# Timezone for event times
+TIMEZONE = "Europe/Madrid"
+
+# Redis key prefixes
+REDIS_PREFIX_PICK = "pick:"
+REDIS_PREFIX_CURSOR = "retador:cursor"
+
+# API defaults
+DEFAULT_ORDER = "created_at_desc"
+DEFAULT_MIN_PROFIT = -1
+DEFAULT_LIMIT = 5000
