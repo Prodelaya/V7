@@ -348,13 +348,85 @@ async def process_batch(self, picks: List[dict]) -> List[ProcessedPick]:
 ## 4. Patrones de Diseño Aplicados
 
 ### 4.1 Strategy Pattern - Calculadores
-(Sin cambios respecto a versión anterior)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    STRATEGY PATTERN                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────────┐                                    │
+│  │CalculatorStrategy   │◀─────────────────┐                 │
+│  │  (Interface)        │                  │                 │
+│  ├─────────────────────┤                  │                 │
+│  │+ calculate_stake()  │     ┌────────────┴────────────┐   │
+│  │+ calculate_min_odds()│     │                         │   │
+│  └─────────────────────┘     │                         │   │
+│            ▲                  │                         │   │
+│            │                  │                         │   │
+│  ┌─────────┴─────────┐  ┌────┴────────┐  ┌────────────┐│   │
+│  │PinnacleStrategy   │  │Bet365Strategy│  │FutureSharp ││   │
+│  │                   │  │ (futuro)    │  │ (futuro)   ││   │
+│  └───────────────────┘  └─────────────┘  └────────────┘│   │
+│                                                         │   │
+│  ┌──────────────────────────────────────────────────────┘   │
+│  │                                                          │
+│  │  CalculatorFactory.get_strategy("pinnaclesports")        │
+│  │                     │                                    │
+│  │                     ▼                                    │
+│  │              PinnacleStrategy()                          │
+│  │                                                          │
+│  └──────────────────────────────────────────────────────────┘
+```
 
 ### 4.2 Chain of Responsibility - Validación
-(Sin cambios respecto a versión anterior)
 
-### 4.3 Repository Pattern - Abstracción de Datos
-(Sin cambios respecto a versión anterior)
+```
+┌─────────────────────────────────────────────────────────────┐
+│              CHAIN OF RESPONSIBILITY                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Pick ──▶ [Odds] ──▶ [Profit] ──▶ [Time] ──▶ [Dedup] ──▶ ✓ │
+│              │          │           │          │            │
+│              ▼          ▼           ▼          ▼            │
+│           Rechazar   Rechazar   Rechazar   Rechazar         │
+│           (razón)    (razón)    (razón)    (razón)          │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+
+Cada validador:
+1. Evalúa su condición
+2. Si falla: retorna error con razón
+3. Si pasa: delega al siguiente
+```
+
+### 4.3 Repository Pattern - Abstracción de Datos### 4.3 Repository Pattern - Abstracción de Datos
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  REPOSITORY PATTERN                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────────┐                                    │
+│  │  PickRepository     │  (Interfaz abstracta)              │
+│  │  ──────────────     │                                    │
+│  │  + save(pick)       │                                    │
+│  │  + exists(key)      │                                    │
+│  │  + get_by_key(key)  │                                    │
+│  └──────────┬──────────┘                                    │
+│             │                                                │
+│             │ implementa                                     │
+│             ▼                                                │
+│  ┌─────────────────────┐     ┌─────────────────────┐        │
+│  │RedisPickRepository  │     │PostgresRepository   │        │
+│  │                     │     │    (futuro)         │        │
+│  └─────────────────────┘     └─────────────────────┘        │
+│                                                              │
+│  Beneficio: Cambiar implementación sin tocar dominio        │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ### 4.4 NUEVO: Adaptive Rate Limiter
 
@@ -519,21 +591,127 @@ retador/
 
 ---
 
-## 6. Configuración Actualizada
+## 6. Interfaces y Contratos
 
-### 6.1 Variables de Entorno
+### 6.1 Interfaz PickRepository
+
+```python
+class PickRepository(ABC):
+    @abstractmethod
+    async def save(self, key: str, ttl: int) -> bool: ...
+    
+    @abstractmethod
+    async def exists(self, key: str) -> bool: ...
+    
+    @abstractmethod
+    async def exists_batch(self, keys: List[str]) -> Dict[str, bool]: ...
+    
+    @abstractmethod
+    async def save_with_opposites(self, pick: Pick, ttl: int) -> bool: ...
+    
+    @abstractmethod
+    async def save_cursor(self, cursor: str) -> bool: ...
+    
+    @abstractmethod
+    async def load_cursor(self) -> Optional[str]: ...
+```
+
+### 6.2 Interfaz BaseCalculator
+
+```python
+class BaseCalculator(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str: ...
+    
+    @abstractmethod
+    def calculate_stake(self, profit: float) -> Optional[StakeResult]: ...
+    
+    @abstractmethod
+    def calculate_min_odds(self, sharp_odds: float) -> MinOddsResult: ...
+    
+    @abstractmethod
+    def is_valid_profit(self, profit: float) -> bool: ...
+```
+
+**Nota**: No incluye `margin` - será añadido en versión futura para yield real.
+
+### 6.3 Interfaz Validator
+
+```python
+class Validator(ABC):
+    @abstractmethod
+    async def validate(self, pick: Pick) -> ValidationResult: ...
+    
+    def set_next(self, validator: 'Validator') -> 'Validator': ...
+```
+
+### 6.4 Interfaz TelegramGateway
+
+```python
+class TelegramGateway(ABC):
+    @abstractmethod
+    async def enqueue(self, message: str, channel_id: int, profit: float) -> bool: ...
+    
+    @abstractmethod
+    async def start_sending(self) -> None: ...
+    
+    @abstractmethod
+    async def stop(self) -> None: ...
+```
+
+---
+
+## 7. Gestión de Errores
+
+### 7.1 Jerarquía de Excepciones
+
+```
+RetadorError (base)
+├── DomainError
+│   ├── InvalidOddsError
+│   ├── InvalidProfitError
+│   └── InvalidMarketError
+├── InfrastructureError
+│   ├── ApiConnectionError
+│   ├── ApiRateLimitError
+│   ├── RedisConnectionError
+│   └── TelegramSendError
+└── ApplicationError
+    ├── ValidationError
+    └── ProcessingError
+```
+
+### 7.2 Estrategia de Manejo
+
+| Tipo de Error | Acción | Retry | Alerta |
+|---------------|--------|-------|--------|
+| API timeout | Log + retry con backoff | Sí (3x) | No |
+| API 429 | Aumentar polling interval | Automático | Si persiste >10min |
+| Redis connection | Reconectar | Sí | Sí |
+| Redis timeout | Log + continuar | No | No |
+| Telegram rate limit | Rotar bot | Automático | No |
+| Telegram forbidden | Log + skip canal | No | Sí |
+| Validation error | Log + descartar pick | No | No |
+| Domain error | Log + descartar pick | No | No |
+
+---
+
+## 8. Configuración y Despliegue
+
+### 8.1 Variables de Entorno
 
 ```env
 # API
 SUREBET_API_URL=https://api.apostasseguras.com/request
 SUREBET_API_TOKEN=xxx
 
-# API Params (optimizados)
+# API Params
 API_ORDER=created_at_desc
 API_MIN_PROFIT=-1
 API_LIMIT=5000
 
-# Polling (adaptativo)
+# Polling
 POLLING_BASE_INTERVAL=0.5
 POLLING_MAX_INTERVAL=5.0
 
@@ -548,7 +726,7 @@ TELEGRAM_TOKENS=token1,token2,token3,token4,token5
 TELEGRAM_MAX_QUEUE_SIZE=1000
 LOG_CHANNEL_ID=-123456789
 
-# App
+# Validation
 MIN_PROFIT=-1.0
 MAX_PROFIT=25.0
 MIN_ODDS=1.10
@@ -556,49 +734,76 @@ MAX_ODDS=9.99
 
 # Cache
 HTML_CACHE_TTL=60
+LOCAL_CACHE_MAX_SIZE=2000
+```
+
+### 8.2 Docker Compose
+
+```yaml
+version: '3.8'
+
+services:
+  retador:
+    build: .
+    env_file: .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
 ```
 
 ---
 
-## 7. Plan de Migración (Actualizado)
+## 9. Plan de Migración
 
-### Fase 1: Fundamentos (Semana 1-2)
-- [ ] Estructura de proyecto
-- [ ] Value Objects
-- [ ] Entidades básicas
-- [ ] Tests unitarios de dominio
+| Fase | Duración | Entregable |
+|------|----------|------------|
+| 0. Setup | 2-3h | Proyecto configurado |
+| 1. Domain Core | 4-6h | Value Objects + Entidades |
+| 2. Calculators | 3-4h | Strategy pattern |
+| 3. Validators | 3-4h | Chain of Responsibility |
+| 4. Config | 2-3h | Pydantic Settings |
+| 5. Infrastructure | 6-8h | Redis, API, Telegram |
+| 6. Application | 3-4h | PickHandler |
+| 7. Integración | 4-6h | Tests E2E + Cutover |
 
-### Fase 2: Infraestructura Core (Semana 3)
-- [ ] Redis Repository (con pipeline, SIN Bloom)
-- [ ] API Client con cursor incremental
-- [ ] Rate Limiter adaptativo
-- [ ] Tests de integración
-
-### Fase 3: Mensajería (Semana 4)
-- [ ] Message Formatter con cache HTML
-- [ ] Telegram Gateway con heap priorizado
-- [ ] Tests de mensajería
-
-### Fase 4: Integración (Semana 5)
-- [ ] Validation Chain
-- [ ] Pick Handler con asyncio.gather
-- [ ] Tests end-to-end
-
-### Fase 5: Migración (Semana 6)
-- [ ] Ejecutar en paralelo con V6
-- [ ] Comparar resultados
-- [ ] Cutover a v2.0
+**Total estimado**: 27-38 horas
 
 ---
 
-## 8. Métricas Objetivo
+## 10. Riesgos y Mitigaciones
 
-| Métrica | V6 (actual) | V2.0 (objetivo) | Mejora |
-|---------|-------------|-----------------|--------|
-| Latencia p50 | ~150ms | ~60ms | 60% |
-| Latencia p95 | ~250ms | ~100ms | 60% |
-| Throughput | ~300 picks/s | ~500 picks/s | 67% |
-| Duplicados | <0.01% | <0.01% | = |
-| Picks perdidos | 0% | 0% | = |
+| Riesgo | Prob. | Impacto | Mitigación |
+|--------|-------|---------|------------|
+| API proveedor cambia | Media | Alto | Abstracción, tests de contrato |
+| API proveedor cae | Baja | Alto | Retry con backoff, alerta >5min |
+| Latencia aumenta | Baja | Alto | Profiling, métricas |
+| Redis falla | Baja | Medio | Fallback cache local |
+| Telegram rate limit | Alta | Bajo | Pool 5 bots, rotación |
+| Cursor se corrompe | Baja | Medio | Validación, reset manual |
+| Fórmula min_odds mal | - | Alto | ✅ Corregida en v2.0 |
+| Bloom Filter | - | Alto | ✅ Rechazado |
+| Fire-and-forget | - | Alto | ✅ Rechazado |
+
+---
+
+## 11. Métricas Objetivo
+
+| Métrica | V6 (actual) | V2.0 (objetivo) |
+|---------|-------------|-----------------|
+| Latencia p50 | ~150ms | ~60ms |
+| Latencia p95 | ~250ms | ~100ms |
+| Throughput | ~300 picks/s | ~500 picks/s |
+| Duplicados | <0.01% | <0.01% |
+| Picks perdidos | 0% | 0% |
 
 **Nota**: No se acepta degradación en duplicados ni picks perdidos (rechazamos Bloom Filter y fire-and-forget por estas razones).
