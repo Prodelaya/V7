@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Retador v2.0** is a professional betting value detection system that identifies arbitrage opportunities between sharp bookmakers (Pinnacle) and soft bookmakers, then distributes picks to professional bettors via Telegram.
 
-- **Language**: Python 3.10+
+- **Language**: Python 3.10+ (compatible with 3.10, 3.11, 3.12)
 - **Type**: Async application (asyncio)
-- **Status**: Architecture design phase - implementation pending
+- **Status**: Implementation in progress - core structures defined, some components pending
 
 ## Build & Development Commands
 
@@ -16,15 +16,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Setup
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt  # requirements.txt needs to be created
+pip install -e ".[dev]"   # Install with dev dependencies
 
-# Run tests (once pytest is configured)
-pytest tests/ -v --cov=src/domain
+# Run application
+python -m scripts.run
+
+# Run tests
+pytest                              # All tests
+pytest tests/ -v --cov=src/domain   # With coverage
 pytest tests/unit/domain/ -k "validator or calculator"
 
-# Linting (once tools are configured)
+# Linting & formatting
 black src/ tests/
-flake8 src/ tests/
+ruff check src/ tests/              # Replaced flake8
+ruff check --fix src/ tests/        # Auto-fix issues
 mypy src/ --strict
 ```
 
@@ -34,18 +39,32 @@ The system follows **Clean Architecture** as a modular monolith:
 
 ```
 src/
-├── domain/           # Pure business logic (entities, value objects, services)
-├── application/      # Use cases and orchestration
-├── infrastructure/   # External integrations (API, Redis, Telegram)
-├── config/           # Settings, bookmakers, logging
-└── shared/           # Exceptions, constants
+├── domain/                    # Pure business logic
+│   ├── entities/              # Pick, Surebet, Bookmaker
+│   ├── value_objects/         # Odds, Profit, MarketType
+│   ├── services/              # CalculationService, OppositeMarketService
+│   │   └── calculators/       # Factory pattern for sharp bookmaker calculators
+│   └── rules/                 # Validation chain
+│       └── validators/        # OddsValidator, ProfitValidator, TimeValidator, etc.
+├── application/               # Use cases and orchestration
+│   ├── dto/                   # PickDTO for data transfer
+│   └── handlers/              # PickHandler
+├── infrastructure/            # External integrations
+│   ├── api/                   # SurebetClient, RateLimiter
+│   ├── cache/                 # LocalCache
+│   ├── messaging/             # TelegramGateway, MessageFormatter
+│   └── repositories/          # RedisRepository, base interfaces
+├── config/                    # Settings, bookmakers, logging
+└── shared/                    # Exceptions, constants
 ```
 
 ### Key External Dependencies
 - **aiohttp** - Async HTTP client for API polling
 - **aiogram** - Telegram Bot API wrapper
 - **redis** (async) - Deduplication and cursor persistence
+- **asyncpg** - PostgreSQL async driver (optional persistence)
 - **orjson** - Optimized JSON serialization
+- **pytz** - Timezone handling
 
 ### Core Data Flow
 1. **API Polling** → Fetch surebets from apostasseguras.com with cursor-based incremental polling
@@ -89,9 +108,26 @@ min_odds = 1 / (1.01 - 1/odd_pinnacle)  # Exact cutoff at -1% profit
 | `POLLING_BASE_INTERVAL` | 0.5s | Base API poll interval |
 | `POLLING_MAX_INTERVAL` | 5.0s | Max interval under backoff |
 
+## Environment Variables
+
+Configuration via `.env` file (see `.env.example`):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `API_URL` | apostasseguras.com | Surebet API endpoint |
+| `API_TOKEN` | - | API authentication token |
+| `REDIS_HOST` | localhost | Redis server host |
+| `REDIS_PORT` | 6379 | Redis server port |
+| `TELEGRAM_BOT_TOKENS` | - | Comma-separated bot tokens |
+| `TELEGRAM_LOG_CHANNEL` | 0 | Channel ID for logging |
+| `CONCURRENT_PICKS` | 250 | Max concurrent pick processing |
+| `CACHE_TTL` | 10 | Local cache TTL in seconds |
+
 ## Documentation
 
 - `/docs/01-SRS.md` - Software Requirements Specification
 - `/docs/02-PDR.md` - Preliminary Design Review
 - `/docs/03-ADRs.md` - Architecture Decision Records (14 decisions)
+- `/docs/04-Structure.md` - Project structure and module organization
+- `/docs/05-Implemetation.md` - Implementation tasks and guidelines
 - `/legacy/RetadorV6.py` - Previous implementation for reference
