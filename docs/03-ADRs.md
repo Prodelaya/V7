@@ -25,6 +25,7 @@
 | ADR-012 | Rechazo de Bloom Filter | Rechazada | Dic 2024 |
 | ADR-013 | Rechazo de Fire-and-Forget Redis | Rechazada | Dic 2024 |
 | ADR-014 | Procesamiento con asyncio.gather (sin workers) | Aceptada | Dic 2024 |
+| ADR-015 | Filtrado en Origen (API Parameters) | Aceptada | Dic 2024 |
 
 ---
 
@@ -479,6 +480,65 @@ async def process_batch(self, picks: List[dict]) -> List[ProcessedPick]:
 
 ---
 
+## ADR-015: Filtrado en Origen (API Parameters)
+
+### Estado
+**Aceptada** (nueva - análisis de optimización API)
+
+### Contexto
+El análisis de la API de apostasseguras.com reveló que solo usábamos una fracción de los parámetros de filtrado disponibles. Esto resultaba en recibir ~5000 picks y filtrar ~80% en código.
+
+### Decisión
+Implementar **filtrado en origen** usando todos los parámetros de API disponibles.
+
+### Parámetros Implementados
+
+| Parámetro | Valor | Propósito |
+|-----------|-------|----------|
+| `outcomes` | `2` | Solo surebets de 2 patas |
+| `min-profit` | `-1` | Profit mínimo |
+| `max-profit` | `25` | Profit máximo |
+| `min-odds` | `1.10` | Cuota mínima |
+| `max-odds` | `9.99` | Cuota máxima |
+| `hide-different-rules` | `true` | Excluir surebets con reglas conflictivas |
+| `startAge` | `PT3M` | Solo surebets < 3 min antigüedad |
+| `oddsFormat` | `eu` | Formato decimal explícito |
+
+### Campos de Respuesta a Validar
+
+| Campo | Significado | Acción |
+|-------|-------------|--------|
+| `rd` | Reglas deportivas diferentes | Rechazar (safety check) |
+| `generatives` | `0`=normal, `1`=probable, `2`=claramente generativa | Rechazar si contiene `2` |
+
+### Justificación
+
+**Impacto cuantificado**:
+- **Antes**: Recibíamos ~5000 picks, filtrar en código, ~500 válidos
+- **Después**: Recibimos ~1000-2000 picks (pre-filtrados), ~500 válidos
+- **Ahorro**: ~60-70% menos datos a procesar
+
+**Beneficios**:
+1. Menor consumo de ancho de banda
+2. Menor carga de CPU en validaciones
+3. Menor uso de memoria
+4. Menor latencia end-to-end
+
+### Consecuencias
+**Positivas**: Reducción significativa de datos procesados, menor latencia
+**Negativas**: Mayor dependencia de la estabilidad de parámetros de API
+
+### Validadores Afectados
+
+| Validador | Antes | Después |
+|-----------|-------|--------|
+| OddsValidator | Validación primaria | Safety check |
+| ProfitValidator | Validación primaria | Safety check |
+| RulesValidator | No existía | Nuevo (campo `rd`) |
+| GenerativeValidator | No existía | Nuevo (campo `generatives`) |
+
+---
+
 ## Apéndice A: Resumen de Decisiones V7
 
 | Propuesta V7 | Decisión | ADR |
@@ -491,7 +551,7 @@ async def process_batch(self, picks: List[dict]) -> List[ProcessedPick]:
 | Cache HTML | ✅ Aceptada | ADR-011 |
 | Heap priorizado | ✅ Aceptada | ADR-006 (actualizado) |
 | Eliminar workers | ✅ Aceptada | ADR-014 |
-| Parámetros API | ✅ Aceptada | ADR-009 |
+| Filtrado en origen | ✅ Aceptada | ADR-015 |
 
 ---
 
