@@ -65,6 +65,26 @@ class ValidationSettings:
 
 
 @dataclass
+class APIQuerySettings:
+    """
+    API query parameters with origin filtering (from ADR-015).
+    
+    These parameters reduce data volume by ~60-70% by filtering at API level.
+    """
+    product: str = "surebets"
+    outcomes: int = 2                      # Solo 2 patas
+    min_profit: float = -1.0               # Profit mínimo aceptable
+    max_profit: float = 25.0               # Profit máximo aceptable
+    min_odds: float = 1.10                 # Cuota mínima aceptable
+    max_odds: float = 9.99                 # Cuota máxima aceptable
+    hide_different_rules: bool = True      # Excluir reglas conflictivas
+    start_age: str = "PT3M"                # Surebets < 3 min antigüedad
+    odds_format: str = "eu"                # Formato decimal explícito
+    order: str = "created_at_desc"         # Ordenar por fecha descendente
+    limit: int = 5000                      # Límite por request
+
+
+@dataclass
 class Settings:
     """
     Application settings container.
@@ -89,6 +109,7 @@ class Settings:
     telegram: TelegramSettings = field(default_factory=TelegramSettings)
     polling: PollingSettings = field(default_factory=PollingSettings)
     validation: ValidationSettings = field(default_factory=ValidationSettings)
+    api_query: APIQuerySettings = field(default_factory=APIQuerySettings)
     
     # Processing settings
     concurrent_picks: int = 250
@@ -96,9 +117,7 @@ class Settings:
     cache_ttl: int = 10
     cache_max_size: int = 2000
     
-    # API query settings
-    limit: int = 5000
-    product: str = "surebets"
+    # Bookmakers and sports (moved from api_query for configuration flexibility)
     sports: List[str] = field(default_factory=lambda: [
         "AmericanFootball", "Badminton", "Baseball", "Basketball",
         "CounterStrike", "Cricket", "Darts", "E_Football", "Football",

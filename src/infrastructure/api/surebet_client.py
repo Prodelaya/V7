@@ -98,12 +98,19 @@ class SurebetClient:
     
     def _build_params(self) -> dict:
         """
-        Build API request parameters.
+        Build API request parameters with origin filtering (ADR-015).
         
-        Includes:
+        Optimized parameters that reduce data volume ~60-70%:
         - product: surebets
+        - outcomes: 2 (only 2-leg surebets)
         - order: created_at_desc
         - min-profit: -1
+        - max-profit: 25
+        - min-odds: 1.10
+        - max-odds: 9.99
+        - hide-different-rules: true
+        - startAge: PT3M
+        - oddsFormat: eu
         - limit: 5000
         - cursor: if available
         - source: bookmakers
