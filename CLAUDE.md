@@ -67,8 +67,8 @@ src/
 - **pytz** - Timezone handling
 
 ### Core Data Flow
-1. **API Polling** → Fetch surebets from apostasseguras.com with cursor-based incremental polling
-2. **Validation Chain** (fail-fast order): OddsValidator → ProfitValidator → TimeValidator → DuplicateValidator (Redis) → OppositeMarketValidator
+1. **API Polling** → Fetch surebets from apostasseguras.com with cursor-based incremental polling and origin filtering (ADR-015)
+2. **Validation Chain** (fail-fast order): OddsValidator → ProfitValidator → TimeValidator → RulesValidator → GenerativeValidator → DuplicateValidator (Redis) → OppositeMarketValidator
 3. **Message Formatting** → Cache static parts (teams, tournament, date), compute dynamic parts (stake emoji, min_odds)
 4. **Telegram Delivery** → Priority heap queue with 5-bot rotation for throughput
 
@@ -83,6 +83,7 @@ src/
 | Cursor incremental | Avoid reprocessing already-handled picks |
 | Adaptive polling backoff | Auto-recovery from rate limits (0.5s base, 5.0s max) |
 | Priority heap for Telegram | Higher-value picks sent first; graceful degradation under load |
+| Origin filtering (ADR-015) | Filter at API level reduces data volume ~60-70% |
 
 ## Domain-Specific Calculations
 
