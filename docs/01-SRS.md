@@ -104,7 +104,7 @@ Retador v2.0 es una evolución del sistema actual (v6) hacia una arquitectura pr
   - `min-odds=1.10`: Cuota mínima aceptable
   - `max-odds=9.99`: Cuota máxima aceptable
   - `hide-different-rules=true`: Excluir surebets con reglas deportivas diferentes
-  - `startAge=PT3M`: Solo surebets con menos de 3 minutos de antigüedad
+  - `startAge=PT10M`: Solo surebets con menos de 10 minutos de antigüedad
   - `oddsFormat=eu`: Formato decimal explícito
 - **Reglas**:
   - Filtrar por bookmakers configurados
@@ -123,15 +123,13 @@ Retador v2.0 es una evolución del sistema actual (v6) hacia una arquitectura pr
 #### RF-003: Validación de Picks
 - **Descripción**: Cada pick debe pasar validaciones antes de procesarse
 - **Validaciones** (en orden, fail-fast):
-  1. Cuota en rango [1.10, 9.99] *(safety check - ya filtrado en API)*
-  2. Profit en rango [-1%, 25%] *(safety check - ya filtrado en API)*
+  1. Cuota en rango [1.10, 9.99] *(optional safety check - ya filtrado en API)*
+  2. Profit en rango [-1%, 25%] *(optional safety check - ya filtrado en API)*
   3. Evento en el futuro (>0 segundos)
-  4. Sin campo `rd` (reglas deportivas diferentes) *(safety check)*
-  5. Sin `generatives=2` (apuestas claramente generativas)
-  6. Una pata debe ser la sharp (Pinnacle)
-  7. Otra pata debe ser una soft objetivo
-  8. No duplicado en Redis (clave principal)
-  9. Mercado opuesto no enviado (Redis)
+  4. Una pata debe ser la sharp (Pinnacle)
+  5. Otra pata debe ser una soft objetivo
+  6. No duplicado en Redis (clave principal)
+  7. Mercado opuesto no enviado (Redis)
 
 #### RF-004: Deduplicación con Redis
 - **Descripción**: Prevenir envío de picks duplicados o rebotados
@@ -245,14 +243,11 @@ Retador v2.0 es una evolución del sistema actual (v6) hacia una arquitectura pr
   - `min-odds`: `1.10`
   - `max-odds`: `9.99`
   - `hide-different-rules`: `true`
-  - `startAge`: `PT3M`
+  - `startAge`: `PT10M`
   - `oddsFormat`: `eu`
   - `order`: `created_at_desc`
   - `limit`: `5000`
   - `cursor`: Paginación incremental
-- **Campos de respuesta relevantes**:
-  - `rd`: Si presente, indica reglas deportivas diferentes (rechazar)
-  - `generatives`: Valores `0,1,2` por pata (rechazar si contiene `2`)
 
 ### 4.2 Interfaz con Redis
 - **Protocolo**: Redis protocol (TCP)

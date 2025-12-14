@@ -501,15 +501,10 @@ Implementar **filtrado en origen** usando todos los parámetros de API disponibl
 | `min-odds` | `1.10` | Cuota mínima |
 | `max-odds` | `9.99` | Cuota máxima |
 | `hide-different-rules` | `true` | Excluir surebets con reglas conflictivas |
-| `startAge` | `PT3M` | Solo surebets < 3 min antigüedad |
+| `startAge` | `PT10M` | Solo surebets < 10 min antigüedad |
 | `oddsFormat` | `eu` | Formato decimal explícito |
 
-### Campos de Respuesta a Validar
 
-| Campo | Significado | Acción |
-|-------|-------------|--------|
-| `rd` | Reglas deportivas diferentes | Rechazar (safety check) |
-| `generatives` | `0`=normal, `1`=probable, `2`=claramente generativa | Rechazar si contiene `2` |
 
 ### Justificación
 
@@ -528,14 +523,10 @@ Implementar **filtrado en origen** usando todos los parámetros de API disponibl
 **Positivas**: Reducción significativa de datos procesados, menor latencia
 **Negativas**: Mayor dependencia de la estabilidad de parámetros de API
 
-### Validadores Afectados
-
 | Validador | Antes | Después |
 |-----------|-------|--------|
-| OddsValidator | Validación primaria | Safety check |
-| ProfitValidator | Validación primaria | Safety check |
-| RulesValidator | No existía | Nuevo (campo `rd`) |
-| GenerativeValidator | No existía | Nuevo (campo `generatives`) |
+| OddsValidator | Validación primaria | Optional safety check |
+| ProfitValidator | Validación primaria | Optional safety check |
 
 ---
 

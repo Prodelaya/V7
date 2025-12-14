@@ -78,7 +78,7 @@ class APIQuerySettings:
     min_odds: float = 1.10                 # Cuota mínima aceptable
     max_odds: float = 9.99                 # Cuota máxima aceptable
     hide_different_rules: bool = True      # Excluir reglas conflictivas
-    start_age: str = "PT3M"                # Surebets < 3 min antigüedad
+    start_age: str = "PT10M"               # Surebets < 10 min antigüedad
     odds_format: str = "eu"                # Formato decimal explícito
     order: str = "created_at_desc"         # Ordenar por fecha descendente
     limit: int = 5000                      # Límite por request

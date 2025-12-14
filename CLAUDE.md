@@ -68,7 +68,7 @@ src/
 
 ### Core Data Flow
 1. **API Polling** → Fetch surebets from apostasseguras.com with cursor-based incremental polling and origin filtering (ADR-015)
-2. **Validation Chain** (fail-fast order): OddsValidator → ProfitValidator → TimeValidator → RulesValidator → GenerativeValidator → DuplicateValidator (Redis) → OppositeMarketValidator
+2. **Validation Chain** (fail-fast order): OddsValidator* → ProfitValidator* → TimeValidator → DuplicateValidator (Redis) → OppositeMarketValidator *(* = optional safety check)*
 3. **Message Formatting** → Cache static parts (teams, tournament, date), compute dynamic parts (stake emoji, min_odds)
 4. **Telegram Delivery** → Priority heap queue with 5-bot rotation for throughput
 
