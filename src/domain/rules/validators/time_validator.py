@@ -1,4 +1,12 @@
-"""Time validator - Check if event is in the future.
+"""Time validator - REQUIRED: Check if event is in the future.
+
+IMPORTANT: This validator is NOT redundant with API's startAge parameter!
+- startAge=PT3M filters surebet CREATION time (when record was created)
+- TimeValidator checks EVENT START time (when the match begins)
+
+These are different things:
+- A surebet created 1 minute ago (passes startAge) could be for a match
+  that started 10 minutes ago (fails TimeValidator)
 
 Implementation Requirements:
 - Validate event time is in the future (>0 seconds from now)
@@ -6,6 +14,7 @@ Implementation Requirements:
 - CPU-only operation (no I/O)
 
 Reference:
+- docs/03-ADRs.md: ADR-015 (explains difference from startAge)
 - docs/05-Implementation.md: Task 3.4
 - docs/01-SRS.md: RF-003 (validation requirements)
 
@@ -19,11 +28,19 @@ from .base import BaseValidator
 
 class TimeValidator(BaseValidator):
     """
-    Validator for event timing.
+    REQUIRED: Validator for event timing.
+    
+    Unlike OddsValidator/ProfitValidator, this is NOT optional because:
+    - API's startAge filters surebet CREATION time
+    - This validator checks EVENT START time
+    
+    A surebet can be "fresh" (created recently) but for an event
+    that has already started. This validator catches those.
     
     Checks that event starts in the future (not already started).
     
     TODO: Implement based on:
+    - ADR-015 in docs/03-ADRs.md
     - Task 3.4 in docs/05-Implementation.md
     - RF-003 in docs/01-SRS.md
     - _get_spain_time() in legacy/RetadorV6.py (line 976)
