@@ -22,17 +22,17 @@ Retador v2.0 es un sistema que:
 
 ### 1.3 Definiciones y Acrónimos
 
-| Término | Definición |
-|---------|------------|
-| **Sharp** | Casa de apuestas con cuotas eficientes (ej: Pinnacle) |
-| **Soft** | Casa de apuestas con márgenes altos y cuotas ineficientes |
-| **Surebet** | Arbitraje entre dos cuotas que garantiza beneficio apostando ambas |
-| **Value bet** | Apuesta con esperanza matemática positiva |
-| **Profit** | Porcentaje de ganancia teórica de una surebet |
-| **Prong** | Cada pata/lado de una surebet |
-| **Pick** | Recomendación de apuesta enviada al usuario |
-| **Rebote** | Inversión de cuotas por entrada masiva de dinero |
-| **Cursor** | Puntero para paginación incremental en API |
+| Término       | Definición                                                         |
+| ------------- | ------------------------------------------------------------------ |
+| **Sharp**     | Casa de apuestas con cuotas eficientes (ej: Pinnacle)              |
+| **Soft**      | Casa de apuestas con márgenes altos y cuotas ineficientes          |
+| **Surebet**   | Arbitraje entre dos cuotas que garantiza beneficio apostando ambas |
+| **Value bet** | Apuesta con esperanza matemática positiva                          |
+| **Profit**    | Porcentaje de ganancia teórica de una surebet                      |
+| **Prong**     | Cada pata/lado de una surebet                                      |
+| **Pick**      | Recomendación de apuesta enviada al usuario                        |
+| **Rebote**    | Inversión de cuotas por entrada masiva de dinero                   |
+| **Cursor**    | Puntero para paginación incremental en API                         |
 
 ### 1.4 Referencias
 - Documentación API apostasseguras.com
@@ -70,10 +70,10 @@ Retador v2.0 es una evolución del sistema actual (v6) hacia una arquitectura pr
 
 ### 2.4 Usuarios y Características
 
-| Usuario | Descripción | Necesidades |
-|---------|-------------|-------------|
+| Usuario               | Descripción                  | Necesidades                             |
+| --------------------- | ---------------------------- | --------------------------------------- |
 | Apostador profesional | Cliente suscrito al servicio | Picks rápidos, precisos, con info clara |
-| Operador | Administrador del sistema | Monitoreo, logs, métricas |
+| Operador              | Administrador del sistema    | Monitoreo, logs, métricas               |
 
 ### 2.5 Restricciones
 - Dependencia de API externa (apostasseguras.com)
@@ -145,12 +145,12 @@ Retador v2.0 es una evolución del sistema actual (v6) hacia una arquitectura pr
 - **Descripción**: Asignar nivel de confianza según profit
 - **Rangos para Pinnacle**:
 
-  | Profit | Emoji | Confianza |
-  |--------|-------|-----------|
-  | -1% a -0.5% | 🔴 | Baja |
-  | -0.5% a 1.5% | 🟠 | Media-baja |
-  | 1.5% a 4% | 🟡 | Media-alta |
-  | >4% | 🟢 | Alta |
+  | Profit       | Emoji | Confianza  |
+  | ------------ | ----- | ---------- |
+  | -1% a -0.5%  | 🔴     | Baja       |
+  | -0.5% a 1.5% | 🟠     | Media-baja |
+  | 1.5% a 4%    | 🟡     | Media-alta |
+  | >4%          | 🟢     | Alta       |
 
 #### RF-006: Cálculo de Cuota Mínima
 - **Descripción**: Calcular cuota mínima en soft para mantener -1% de value
@@ -190,6 +190,24 @@ Retador v2.0 es una evolución del sistema actual (v6) hacia una arquitectura pr
   - Rangos de validación
   - Parámetros de polling (intervalo base, máximo)
   - Parámetros de API (min-profit, order, limit)
+
+#### RF-010: Transformación de URLs de Casas de Apuestas
+- **Descripción**: Ajustar los dominios de las URLs de casas de apuestas para el mercado español
+- **Transformaciones**:
+  
+  | Casa       | Original          | Transformado                     |
+  | ---------- | ----------------- | -------------------------------- |
+  | Bet365     | `bet365.com`      | `bet365.es` (ruta en mayúsculas) |
+  | Betway     | `betway.com/en`   | `betway.es/es`                   |
+  | Bwin       | `bwin.com/en`     | `bwin.es/es`                     |
+  | PokerStars | `pokerstars.uk`   | `pokerstars.es`                  |
+  | Versus     | `sportswidget...` | `www.versus.es/apuestas`         |
+  
+- **Reglas**:
+  - Aplicar transformación antes de generar el mensaje de Telegram
+  - Preservar parámetros de query string originales
+  - Los enlaces deben funcionar correctamente para usuarios en España
+- **Referencia Legacy**: `ajustar_dominio()` en RetadorV6.py (línea ~1319)
 
 ### 3.2 Requisitos No Funcionales
 
@@ -293,32 +311,32 @@ Retador v2.0 es una evolución del sistema actual (v6) hacia una arquitectura pr
 ### 6.1 Mercados Opuestos
 
 | Mercado | Opuesto(s) |
-|---------|------------|
-| win1 | win2 |
-| over | under |
-| ah1 | ah2 |
-| odd | even |
-| yes | no |
-| _1x | _x2, _12 |
+| ------- | ---------- |
+| win1    | win2       |
+| over    | under      |
+| ah1     | ah2        |
+| odd     | even       |
+| yes     | no         |
+| _1x     | _x2, _12   |
 
 ### 6.2 Tabla de Cuotas Mínimas (Referencia)
 
 | Cuota Pinnacle | Min Odds Soft |
-|----------------|---------------|
-| 1.50 | 2.92 |
-| 1.80 | 2.20 |
-| 2.00 | 1.96 |
-| 2.05 | 1.92 |
-| 2.50 | 1.64 |
-| 3.00 | 1.48 |
+| -------------- | ------------- |
+| 1.50           | 2.92          |
+| 1.80           | 2.20          |
+| 2.00           | 1.96          |
+| 2.05           | 1.92          |
+| 2.50           | 1.64          |
+| 3.00           | 1.48          |
 
 ### 6.3 Parámetros de Polling Adaptativo
 
-| Escenario | Intervalo | Acción |
-|-----------|-----------|--------|
-| Normal | 0.5s | Base |
-| 1x 429 | 1.0s | Backoff |
-| 2x 429 | 2.0s | Backoff |
-| 3x 429 | 4.0s | Backoff |
-| 4x+ 429 | 5.0s | Máximo |
-| Éxito tras error | -1 nivel | Recuperación gradual |
+| Escenario        | Intervalo | Acción               |
+| ---------------- | --------- | -------------------- |
+| Normal           | 0.5s      | Base                 |
+| 1x 429           | 1.0s      | Backoff              |
+| 2x 429           | 2.0s      | Backoff              |
+| 3x 429           | 4.0s      | Backoff              |
+| 4x+ 429          | 5.0s      | Máximo               |
+| Éxito tras error | -1 nivel  | Recuperación gradual |
