@@ -165,36 +165,36 @@ Tiempos objetivo por etapa:
 
 #### 3.1.1 Value Objects
 
-| Clase | Tipo interno | Validación | Comportamiento extra |
-|-------|--------------|------------|---------------------|
-| `Odds` | float | 1.01-1000 | `implied_probability()` |
-| `Profit` | float | -100 a 100 | `is_acceptable()` |
-| `MarketType` | Enum | Valores predefinidos | `get_opposite()` |
-| `EventTime` | datetime | Futuro, timezone-aware | `seconds_until()` |
+| Clase        | Tipo interno | Validación             | Comportamiento extra    |
+| ------------ | ------------ | ---------------------- | ----------------------- |
+| `Odds`       | float        | 1.01-1000              | `implied_probability()` |
+| `Profit`     | float        | -100 a 100             | `is_acceptable()`       |
+| `MarketType` | Enum         | Valores predefinidos   | `get_opposite()`        |
+| `EventTime`  | datetime     | Futuro, timezone-aware | `seconds_until()`       |
 
 #### 3.1.2 Entidades
 
-| Clase | Atributos Principales | Comportamiento |
-|-------|----------------------|----------------|
-| `Pick` | teams, odds, market, time, bookie | Inmutable, validado |
-| `Surebet` | prong_sharp, prong_soft, profit | Calcula roles |
-| `Bookmaker` | name, type (sharp/soft), config | Configuración |
+| Clase       | Atributos Principales             | Comportamiento      |
+| ----------- | --------------------------------- | ------------------- |
+| `Pick`      | teams, odds, market, time, bookie | Inmutable, validado |
+| `Surebet`   | prong_sharp, prong_soft, profit   | Calcula roles       |
+| `Bookmaker` | name, type (sharp/soft), config   | Configuración       |
 
 #### 3.1.3 Servicios de Dominio
 
-| Servicio | Responsabilidad | Patrón |
-|----------|-----------------|--------|
-| `StakeCalculator` | Calcular stake por profit | Strategy |
-| `MinOddsCalculator` | Calcular cuota mínima | Strategy |
-| `OppositeMarketResolver` | Resolver mercados opuestos | Lookup |
-| `ValidationChain` | Pipeline de validación | Chain of Responsibility |
+| Servicio                 | Responsabilidad            | Patrón                  |
+| ------------------------ | -------------------------- | ----------------------- |
+| `StakeCalculator`        | Calcular stake por profit  | Strategy                |
+| `MinOddsCalculator`      | Calcular cuota mínima      | Strategy                |
+| `OppositeMarketResolver` | Resolver mercados opuestos | Lookup                  |
+| `ValidationChain`        | Pipeline de validación     | Chain of Responsibility |
 
 ### 3.2 Capa de Aplicación
 
 #### 3.2.1 Handlers
 
-| Handler | Responsabilidad |
-|---------|-----------------|
+| Handler       | Responsabilidad                              |
+| ------------- | -------------------------------------------- |
 | `PickHandler` | Orquesta flujo completo con `asyncio.gather` |
 
 #### 3.2.2 Procesamiento Paralelo (sin workers)
@@ -684,16 +684,16 @@ RetadorError (base)
 
 ### 7.2 Estrategia de Manejo
 
-| Tipo de Error | Acción | Retry | Alerta |
-|---------------|--------|-------|--------|
-| API timeout | Log + retry con backoff | Sí (3x) | No |
-| API 429 | Aumentar polling interval | Automático | Si persiste >10min |
-| Redis connection | Reconectar | Sí | Sí |
-| Redis timeout | Log + continuar | No | No |
-| Telegram rate limit | Rotar bot | Automático | No |
-| Telegram forbidden | Log + skip canal | No | Sí |
-| Validation error | Log + descartar pick | No | No |
-| Domain error | Log + descartar pick | No | No |
+| Tipo de Error       | Acción                    | Retry      | Alerta             |
+| ------------------- | ------------------------- | ---------- | ------------------ |
+| API timeout         | Log + retry con backoff   | Sí (3x)    | No                 |
+| API 429             | Aumentar polling interval | Automático | Si persiste >10min |
+| Redis connection    | Reconectar                | Sí         | Sí                 |
+| Redis timeout       | Log + continuar           | No         | No                 |
+| Telegram rate limit | Rotar bot                 | Automático | No                 |
+| Telegram forbidden  | Log + skip canal          | No         | Sí                 |
+| Validation error    | Log + descartar pick      | No         | No                 |
+| Domain error        | Log + descartar pick      | No         | No                 |
 
 ---
 
@@ -765,45 +765,127 @@ volumes:
 
 ## 9. Plan de Migración
 
-| Fase | Duración | Entregable |
-|------|----------|------------|
-| 0. Setup | 2-3h | Proyecto configurado |
-| 1. Domain Core | 4-6h | Value Objects + Entidades |
-| 2. Calculators | 3-4h | Strategy pattern |
-| 3. Validators | 3-4h | Chain of Responsibility |
-| 4. Config | 2-3h | Pydantic Settings |
-| 5. Infrastructure | 6-8h | Redis, API, Telegram |
-| 6. Application | 3-4h | PickHandler |
-| 7. Integración | 4-6h | Tests E2E + Cutover |
+| Fase           | Duración | Con Buffer (x1.5) | Entregable                            |
+| -------------- | -------- | ----------------- | ------------------------------------- |
+| 0. Setup       | 2-3h     | 3-4h              | Proyecto configurado                  |
+| 1. Domain Core | 4-6h     | 6-9h              | Value Objects + Entidades + Constants |
+| 2. Calculators | 3-4h     | 4-6h              | Strategy pattern                      |
+| 3. Validators  | 3-4h     | 4-6h              | Chain of Responsibility               |
+| 4. Config      | 2-3h     | 3-4h              | Pydantic Settings                     |
+| 5A. Redis      | 2-3h     | 3-4h              | Repository + Tests                    |
+| 5B. API Client | 2-3h     | 3-4h              | Client + RateLimiter                  |
+| 5C. Messaging  | 2-3h     | 3-4h              | Formatter (RF-010) + Gateway          |
+| 6. Application | 3-4h     | 4-6h              | PickHandler                           |
+| 7. Integración | 4-6h     | 6-9h              | Tests E2E + Cutover                   |
 
-**Total estimado**: 27-38 horas
+**Total estimado**: 27-38 horas → **40-56 horas** (con buffer realista)
 
 ---
 
 ## 10. Riesgos y Mitigaciones
 
-| Riesgo | Prob. | Impacto | Mitigación |
-|--------|-------|---------|------------|
-| API proveedor cambia | Media | Alto | Abstracción, tests de contrato |
-| API proveedor cae | Baja | Alto | Retry con backoff, alerta >5min |
-| Latencia aumenta | Baja | Alto | Profiling, métricas |
-| Redis falla | Baja | Medio | Fallback cache local |
-| Telegram rate limit | Alta | Bajo | Pool 5 bots, rotación |
-| Cursor se corrompe | Baja | Medio | Validación, reset manual |
-| Fórmula min_odds mal | - | Alto | ✅ Corregida en v2.0 |
-| Bloom Filter | - | Alto | ✅ Rechazado |
-| Fire-and-forget | - | Alto | ✅ Rechazado |
+| Riesgo               | Prob. | Impacto | Mitigación                      |
+| -------------------- | ----- | ------- | ------------------------------- |
+| API proveedor cambia | Media | Alto    | Abstracción, tests de contrato  |
+| API proveedor cae    | Baja  | Alto    | Retry con backoff, alerta >5min |
+| Latencia aumenta     | Baja  | Alto    | Profiling, métricas             |
+| Redis falla          | Baja  | Medio   | Fallback cache local            |
+| Telegram rate limit  | Alta  | Bajo    | Pool 5 bots, rotación           |
+| Cursor se corrompe   | Baja  | Medio   | Validación, reset manual        |
+| Fórmula min_odds mal | -     | Alto    | ✅ Corregida en v2.0             |
+| Bloom Filter         | -     | Alto    | ✅ Rechazado                     |
+| Fire-and-forget      | -     | Alto    | ✅ Rechazado                     |
 
 ---
 
 ## 11. Métricas Objetivo
 
-| Métrica | V6 (actual) | V2.0 (objetivo) |
-|---------|-------------|-----------------|
-| Latencia p50 | ~150ms | ~60ms |
-| Latencia p95 | ~250ms | ~100ms |
-| Throughput | ~300 picks/s | ~500 picks/s |
-| Duplicados | <0.01% | <0.01% |
-| Picks perdidos | 0% | 0% |
+| Métrica        | V6 (actual)  | V2.0 (objetivo) |
+| -------------- | ------------ | --------------- |
+| Latencia p50   | ~150ms       | ~60ms           |
+| Latencia p95   | ~250ms       | ~100ms          |
+| Throughput     | ~300 picks/s | ~500 picks/s    |
+| Duplicados     | <0.01%       | <0.01%          |
+| Picks perdidos | 0%           | 0%              |
 
 **Nota**: No se acepta degradación en duplicados ni picks perdidos (rechazamos Bloom Filter y fire-and-forget por estas razones).
+
+---
+
+## 12. Plan de Rollback
+
+### 12.1 Criterios de Rollback
+
+El rollback a V6 se ejecutará **inmediatamente** si se detecta:
+
+| Métrica              | Umbral Crítico         | Acción                                            |
+| -------------------- | ---------------------- | ------------------------------------------------- |
+| **Duplicados**       | >0.1%                  | 🔴 Rollback inmediato                              |
+| **Picks perdidos**   | >0 en 1 hora           | 🔴 Rollback inmediato                              |
+| **Latencia p95**     | >300ms sostenido 10min | 🟠 Investigar, rollback si no se resuelve en 1h    |
+| **Errores Redis**    | >10/min sostenido 5min | 🟠 Investigar, rollback si no se resuelve en 30min |
+| **Errores Telegram** | >50% mensajes fallidos | 🔴 Rollback inmediato                              |
+
+### 12.2 Procedimiento de Rollback
+
+```bash
+# 1. Detener V2.0
+docker-compose -f docker-compose.v2.yml down
+
+# 2. Verificar que V6 sigue corriendo (debería estar en paralelo)
+docker ps | grep retador-v6
+
+# 3. Si V6 no está corriendo, iniciarlo
+docker-compose -f docker-compose.v6.yml up -d
+
+# 4. Verificar que V6 está enviando picks
+docker logs retador-v6 --tail 50
+
+# 5. Limpiar cursor de V2.0 en Redis (evitar conflictos futuros)
+redis-cli DEL retador:v2:cursor
+```
+
+### 12.3 Estrategia de Ejecución Paralela
+
+Durante la fase de validación (Fase 7), V6 y V2.0 correrán en paralelo:
+
+```
+┌─────────────────┐     ┌─────────────────┐
+│   Retador V6    │     │  Retador V2.0   │
+│   (producción)  │     │   (shadow)      │
+└────────┬────────┘     └────────┬────────┘
+         │                       │
+         │  Envía picks          │  Solo registra, NO envía
+         ▼                       ▼
+   ┌──────────┐           ┌──────────┐
+   │ Telegram │           │  Logs +  │
+   │ Channels │           │ Métricas │
+   └──────────┘           └──────────┘
+```
+
+**Modo Shadow de V2.0:**
+- Procesa los mismos picks que V6
+- Registra qué enviaría (sin enviar realmente)
+- Compara con lo que V6 envió
+- Alerta si hay discrepancias
+
+### 12.4 Checklist Pre-Cutover
+
+Antes de hacer cutover completo a V2.0, verificar:
+
+- [ ] V2.0 en shadow mode por mínimo 24 horas
+- [ ] 0 discrepancias con V6 en picks enviados
+- [ ] Latencia p95 < 100ms consistente
+- [ ] 0 errores críticos en logs
+- [ ] Redis y Telegram estables
+- [ ] Equipo disponible para monitoreo post-cutover (primera hora)
+
+### 12.5 Checklist Post-Rollback
+
+Si se ejecuta rollback, verificar:
+
+- [ ] V6 enviando picks correctamente
+- [ ] Logs de V6 sin errores
+- [ ] Canal de Telegram recibiendo mensajes
+- [ ] Crear issue en GitHub con detalles del problema
+- [ ] Programar post-mortem en 24 horas
