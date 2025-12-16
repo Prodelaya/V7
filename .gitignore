@@ -1,116 +1,102 @@
+
+
 # Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
 # C extensions
-*.so
-
 # Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
 # Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
 # IDE / Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.project
-.pydevproject
-.settings/
-
+# Installer logs
 # Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Logs
-*.log
-logs/
-
-# Redis dump
-dump.rdb
-
 # Local configuration
-config.local.py
-.env.local
-.env.*.local
-
+# Logs
 # OS generated files
+# PyInstaller
+# Redis dump
+# Secrets / Credentials
+# Translations
+# Unit test / coverage reports
+# mypy
+# pyenv
+*$py.class
+*.cover
+*.egg
+*.egg-info/
+*.env
+*.key
+*.log
+*.manifest
+*.mo
+*.pem
+*.pot
+*.py,cover
+*.py[cod]
+*.pyc
+*.so
+*.spec
+*.swo
+*.swp
+*~
 .DS_Store
 .DS_Store?
-._*
+.Python
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
-
-# Secrets / Credentials
-*.pem
-*.key
-secrets.py
-credentials.py
+._*
+.cache
+.coverage
+.coverage.*
+.dmypy.json
+.eggs/
 .env
-*.env
-__pycache__/
-*.pyc
-
-venv/
+.env
+.env.*.local
+.env.docker
+.env.docker
+.env.local
+.hypothesis/
+.idea/
+.installed.cfg
+.ipynb_checkpoints
+.mypy_cache/
+.nox/
+.project
+.pydevproject
+.pytest_cache/
+.python-version
+.settings/
+.tox/
+.venv
 .venv/
-
+.vscode/
+ENV/
+Thumbs.db
+__pycache__/
+__pycache__/
+build/
+config.local.py
+coverage.xml
+credentials.py
+develop-eggs/
+dist/
+dmypy.json
+downloads/
+dump.rdb
+eggs/
+ehthumbs.db
+env.bak/
+env/
+htmlcov/
+lib/
+lib64/
+logs/
+nosetests.xml
+parts/
+pip-delete-this-directory.txt
+pip-log.txt
+sdist/
+secrets.py
+var/
+venv.bak/
+venv/
+venv/
+wheels/
