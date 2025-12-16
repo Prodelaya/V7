@@ -1,7 +1,7 @@
 # Registro de Decisiones Arquitectónicas (ADR)
 ## Sistema Retador v2.0
 
-**Fecha de inicio**: Diciembre 2024  
+**Fecha de inicio**: Diciembre 2025  
 **Estado**: Activo  
 **Última actualización**: Integración selectiva de propuestas V7
 
@@ -9,23 +9,24 @@
 
 ## Índice de Decisiones
 
-| ID | Título | Estado | Fecha |
-|----|--------|--------|-------|
-| ADR-001 | Arquitectura Monolito Modular | Aceptada | Dic 2024 |
-| ADR-002 | Strategy Pattern para Cálculos por Sharp | Aceptada | Dic 2024 |
-| ADR-003 | Fórmula de Cuota Mínima | Aceptada | Dic 2024 |
-| ADR-004 | Redis para Deduplicación (sin Bloom Filter) | Aceptada | Dic 2024 |
-| ADR-005 | Chain of Responsibility para Validación | Aceptada | Dic 2024 |
-| ADR-006 | Multi-Bot Telegram con Heap Priorizado | Aceptada | Dic 2024 |
-| ADR-007 | Persistencia PostgreSQL Diferida | Diferida | Dic 2024 |
-| ADR-008 | Value Objects para Datos de Dominio | Aceptada | Dic 2024 |
-| ADR-009 | Cursor Incremental para API | Aceptada | Dic 2024 |
-| ADR-010 | Polling Adaptativo con Backoff | Aceptada | Dic 2024 |
-| ADR-011 | Cache HTML en Message Formatter | Aceptada | Dic 2024 |
-| ADR-012 | Rechazo de Bloom Filter | Rechazada | Dic 2024 |
-| ADR-013 | Rechazo de Fire-and-Forget Redis | Rechazada | Dic 2024 |
-| ADR-014 | Procesamiento con asyncio.gather (sin workers) | Aceptada | Dic 2024 |
-| ADR-015 | Filtrado en Origen (API Parameters) | Aceptada | Dic 2024 |
+| ID      | Título                                         | Estado    | Fecha    |
+| ------- | ---------------------------------------------- | --------- | -------- |
+| ADR-001 | Arquitectura Monolito Modular                  | Aceptada  | Dic 2024 |
+| ADR-002 | Strategy Pattern para Cálculos por Sharp       | Aceptada  | Dic 2024 |
+| ADR-003 | Fórmula de Cuota Mínima                        | Aceptada  | Dic 2024 |
+| ADR-004 | Redis para Deduplicación (sin Bloom Filter)    | Aceptada  | Dic 2024 |
+| ADR-005 | Chain of Responsibility para Validación        | Aceptada  | Dic 2024 |
+| ADR-006 | Multi-Bot Telegram con Heap Priorizado         | Aceptada  | Dic 2024 |
+| ADR-007 | Persistencia PostgreSQL Diferida               | Diferida  | Dic 2024 |
+| ADR-008 | Value Objects para Datos de Dominio            | Aceptada  | Dic 2024 |
+| ADR-009 | Cursor Incremental para API                    | Aceptada  | Dic 2024 |
+| ADR-010 | Polling Adaptativo con Backoff                 | Aceptada  | Dic 2024 |
+| ADR-011 | Cache HTML en Message Formatter                | Aceptada  | Dic 2024 |
+| ADR-012 | Rechazo de Bloom Filter                        | Rechazada | Dic 2024 |
+| ADR-013 | Rechazo de Fire-and-Forget Redis               | Rechazada | Dic 2024 |
+| ADR-014 | Procesamiento con asyncio.gather (sin workers) | Aceptada  | Dic 2024 |
+| ADR-015 | Filtrado en Origen (API Parameters)            | Aceptada  | Dic 2024 |
+| ADR-016 | Sistema de Suscripciones Automatizado          | Propuesta | Dic 2024 |
 
 ---
 
@@ -103,13 +104,13 @@ Usar **Redis con pipeline batch**, **SIN Bloom Filter**.
 
 ### Justificación
 
-| Criterio | Redis Pipeline | Redis + Bloom |
-|----------|----------------|---------------|
-| Latencia | ~10ms (50 keys) | ~2ms |
-| Falsos positivos | 0% | ~1% |
-| Picks perdidos/hora | 0 | ~5 (en 500 picks) |
-| Complejidad | Baja | Media |
-| Dependencias | 0 nuevas | +1 (pybloom) |
+| Criterio            | Redis Pipeline  | Redis + Bloom     |
+| ------------------- | --------------- | ----------------- |
+| Latencia            | ~10ms (50 keys) | ~2ms              |
+| Falsos positivos    | 0%              | ~1%               |
+| Picks perdidos/hora | 0               | ~5 (en 500 picks) |
+| Complejidad         | Baja            | Media             |
+| Dependencias        | 0 nuevas        | +1 (pybloom)      |
 
 **Factor decisivo**: 1% de falsos positivos = picks válidos con valor NO enviados = pérdida de dinero para el apostador. La ganancia de 8ms no justifica el riesgo.
 
@@ -281,12 +282,12 @@ class AdaptiveRateLimiter:
 ### Tabla de Intervalos
 
 | Errores 429 | Intervalo |
-|-------------|-----------|
-| 0 | 0.5s |
-| 1 | 1.0s |
-| 2 | 2.0s |
-| 3 | 4.0s |
-| 4+ | 5.0s |
+| ----------- | --------- |
+| 0           | 0.5s      |
+| 1           | 1.0s      |
+| 2           | 2.0s      |
+| 3           | 4.0s      |
+| 4+          | 5.0s      |
 
 ### Justificación
 - Auto-recuperación cuando el límite se libera
@@ -493,16 +494,16 @@ Implementar **filtrado en origen** usando todos los parámetros de API disponibl
 
 ### Parámetros Implementados
 
-| Parámetro | Valor | Propósito |
-|-----------|-------|----------|
-| `outcomes` | `2` | Solo surebets de 2 patas |
-| `min-profit` | `-1` | Profit mínimo |
-| `max-profit` | `25` | Profit máximo |
-| `min-odds` | `1.10` | Cuota mínima |
-| `max-odds` | `9.99` | Cuota máxima |
-| `hide-different-rules` | `true` | Excluir surebets con reglas conflictivas |
-| `startAge` | `PT10M` | Solo surebets < 10 min antigüedad |
-| `oddsFormat` | `eu` | Formato decimal explícito |
+| Parámetro              | Valor   | Propósito                                |
+| ---------------------- | ------- | ---------------------------------------- |
+| `outcomes`             | `2`     | Solo surebets de 2 patas                 |
+| `min-profit`           | `-1`    | Profit mínimo                            |
+| `max-profit`           | `25`    | Profit máximo                            |
+| `min-odds`             | `1.10`  | Cuota mínima                             |
+| `max-odds`             | `9.99`  | Cuota máxima                             |
+| `hide-different-rules` | `true`  | Excluir surebets con reglas conflictivas |
+| `startAge`             | `PT10M` | Solo surebets < 10 min antigüedad        |
+| `oddsFormat`           | `eu`    | Formato decimal explícito                |
 
 
 
@@ -523,26 +524,55 @@ Implementar **filtrado en origen** usando todos los parámetros de API disponibl
 **Positivas**: Reducción significativa de datos procesados, menor latencia
 **Negativas**: Mayor dependencia de la estabilidad de parámetros de API
 
-| Validador | Antes | Después |
-|-----------|-------|--------|
-| OddsValidator | Validación primaria | Optional safety check |
+| Validador       | Antes               | Después               |
+| --------------- | ------------------- | --------------------- |
+| OddsValidator   | Validación primaria | Optional safety check |
 | ProfitValidator | Validación primaria | Optional safety check |
+
+---
+
+## ADR-016: Sistema de Suscripciones Automatizado
+
+### Estado
+**Propuesta**
+
+### Contexto
+Implementación de sistema de suscripciones con canales exclusivos por cliente. Flujo automático: selección → pago → provisioning → acceso.
+
+### Decisiones Clave
+- **Telegram**: Userbot con Telethon (MTProto) para crear canales programáticamente
+- **Pagos**: Stripe Checkout + Billing con webhooks
+- **Web**: FastAPI + Jinja2 para landing page y webhooks
+- **Base de Datos**: PostgreSQL con tablas `customers`, `service_plans`, `subscriptions`, `telegram_channels`
+
+### Componentes Nuevos
+- `src/subscriptions/` - Módulo completo de suscripciones
+- `src/web/` - Landing page y webhooks
+- `migrations/` - Scripts SQL para nuevas tablas
+
+### Documentación Detallada
+📄 **[ADR-016-Subscriptions.md](./ADRs/ADR-016-Subscriptions.md)** - Documento completo con:
+- Análisis de alternativas
+- Arquitectura de bots
+- Modelo de datos SQL
+- Flujo de provisioning
+- Estimaciones y riesgos
 
 ---
 
 ## Apéndice A: Resumen de Decisiones V7
 
-| Propuesta V7 | Decisión | ADR |
-|--------------|----------|-----|
-| Bloom Filter | ❌ Rechazada | ADR-012 |
-| Fire-and-forget Redis | ❌ Rechazada | ADR-013 |
+| Propuesta V7           | Decisión    | ADR                       |
+| ---------------------- | ----------- | ------------------------- |
+| Bloom Filter           | ❌ Rechazada | ADR-012                   |
+| Fire-and-forget Redis  | ❌ Rechazada | ADR-013                   |
 | Estructura carpetas V7 | ❌ Rechazada | (usar Clean Architecture) |
-| Cursor incremental | ✅ Aceptada | ADR-009 |
-| Polling adaptativo | ✅ Aceptada | ADR-010 |
-| Cache HTML | ✅ Aceptada | ADR-011 |
-| Heap priorizado | ✅ Aceptada | ADR-006 (actualizado) |
-| Eliminar workers | ✅ Aceptada | ADR-014 |
-| Filtrado en origen | ✅ Aceptada | ADR-015 |
+| Cursor incremental     | ✅ Aceptada  | ADR-009                   |
+| Polling adaptativo     | ✅ Aceptada  | ADR-010                   |
+| Cache HTML             | ✅ Aceptada  | ADR-011                   |
+| Heap priorizado        | ✅ Aceptada  | ADR-006 (actualizado)     |
+| Eliminar workers       | ✅ Aceptada  | ADR-014                   |
+| Filtrado en origen     | ✅ Aceptada  | ADR-015                   |
 
 ---
 
@@ -575,7 +605,7 @@ Implementar **filtrado en origen** usando todos los parámetros de API disponibl
 
 ## Historial de Cambios
 
-| Fecha | Versión | Cambios | Autor |
-|-------|---------|---------|-------|
-| Dic 2024 | 1.0 | Documento inicial con 8 ADRs | Equipo Retador |
-| Dic 2024 | 2.0 | Integración selectiva V7: +6 ADRs (009-014), actualización ADR-004 y ADR-006 | Equipo Retador |
+| Fecha    | Versión | Cambios                                                                      | Autor          |
+| -------- | ------- | ---------------------------------------------------------------------------- | -------------- |
+| Dic 2024 | 1.0     | Documento inicial con 8 ADRs                                                 | Equipo Retador |
+| Dic 2024 | 2.0     | Integración selectiva V7: +6 ADRs (009-014), actualización ADR-004 y ADR-006 | Equipo Retador |
