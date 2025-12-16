@@ -76,11 +76,11 @@ pytest-cov>=4.0.0
 > **Nota**: Puerto 6379 solo expuesto en `docker-compose.dev.yml` para debugging local.
 
 ### Checklist
-- [ ] 0.1 pyproject.toml configurado
-- [ ] 0.2 requirements.txt creado
-- [ ] 0.3 .env.example con todas las variables
-- [ ] 0.4 Estructura verificada
-- [ ] 0.5 pytest funciona
+- [x] 0.1 pyproject.toml configurado
+- [x] 0.2 requirements.txt creado
+- [x] 0.3 .env.example con todas las variables
+- [x] 0.4 Estructura verificada
+- [x] 0.5 pytest funciona
 - [x] 0.6 Dockerfile creado
 - [x] 0.7 docker-compose.yml creado
 - [x] 0.8 docker-compose.dev.yml creado
@@ -509,7 +509,7 @@ async def main():
 ## 📊 Resumen de Progreso
 
 ```
-Fase 0:  Setup          [____] 0%
+Fase 0:  Setup          [████] 100%
 Fase 1:  Domain Core    [____] 0%
 Fase 2:  Calculators    [____] 0%
 Fase 3:  Validators     [____] 0%
@@ -520,7 +520,7 @@ Fase 5C: Messaging      [____] 0%
 Fase 6:  Application    [____] 0%
 Fase 7:  Integración    [____] 0%
 
-Total: 0/48 tareas completadas
+Total: 9/57 tareas completadas
 ```
 
 ---
