@@ -35,13 +35,17 @@ Tener el proyecto listo para desarrollar: dependencias, estructura, herramientas
 
 ### Backlog
 
-| ID  | Tarea                                        | Archivo(s)         | Criterio de Aceptación           |
-| --- | -------------------------------------------- | ------------------ | -------------------------------- |
-| 0.1 | Configurar `pyproject.toml` con dependencias | `pyproject.toml`   | `pip install -e .` funciona      |
-| 0.2 | Crear `requirements.txt`                     | `requirements.txt` | Todas las deps listadas          |
-| 0.3 | Configurar `.env.example`                    | `.env.example`     | Todas las variables documentadas |
-| 0.4 | Verificar estructura de carpetas             | `src/`, `tests/`   | Todos los `__init__.py` creados  |
-| 0.5 | Configurar pytest                            | `pyproject.toml`   | `pytest` ejecuta sin errores     |
+| ID  | Tarea                                        | Archivo(s)               | Criterio de Aceptación                   |
+| --- | -------------------------------------------- | ------------------------ | ---------------------------------------- |
+| 0.1 | Configurar `pyproject.toml` con dependencias | `pyproject.toml`         | `pip install -e .` funciona              |
+| 0.2 | Crear `requirements.txt`                     | `requirements.txt`       | Todas las deps listadas                  |
+| 0.3 | Configurar `.env.example`                    | `.env.example`           | Todas las variables documentadas         |
+| 0.4 | Verificar estructura de carpetas             | `src/`, `tests/`         | Todos los `__init__.py` creados          |
+| 0.5 | Configurar pytest                            | `pyproject.toml`         | `pytest` ejecuta sin errores             |
+| 0.6 | Crear Dockerfile multi-stage                 | `Dockerfile`             | `docker build .` funciona sin errores    |
+| 0.7 | Crear docker-compose.yml                     | `docker-compose.yml`     | `docker-compose up -d` levanta app+redis |
+| 0.8 | Crear docker-compose.dev.yml                 | `docker-compose.dev.yml` | Hot-reload funciona en desarrollo        |
+| 0.9 | Crear .dockerignore                          | `.dockerignore`          | Build context optimizado (<100MB)        |
 
 ### Dependencias a instalar
 
@@ -62,12 +66,25 @@ pytest-asyncio>=0.23.0
 pytest-cov>=4.0.0
 ```
 
+### Docker Stack
+
+| Servicio | Imagen         | Recursos (bmax90)    | Puerto |
+| -------- | -------------- | -------------------- | ------ |
+| retador  | Build local    | 2GB RAM límite       | -      |
+| redis    | redis:7-alpine | 1GB RAM límite (LRU) | 6379*  |
+
+> **Nota**: Puerto 6379 solo expuesto en `docker-compose.dev.yml` para debugging local.
+
 ### Checklist
 - [ ] 0.1 pyproject.toml configurado
 - [ ] 0.2 requirements.txt creado
 - [ ] 0.3 .env.example con todas las variables
 - [ ] 0.4 Estructura verificada
 - [ ] 0.5 pytest funciona
+- [x] 0.6 Dockerfile creado
+- [x] 0.7 docker-compose.yml creado
+- [x] 0.8 docker-compose.dev.yml creado
+- [x] 0.9 .dockerignore creado
 
 ---
 

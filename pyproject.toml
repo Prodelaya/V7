@@ -24,10 +24,13 @@ classifiers = [
 dependencies = [
     "aiohttp>=3.9.0",
     "aiogram>=3.2.0",
-    "asyncpg>=0.29.0",
+    "asyncpg>=0.29.0",  # Para futuro: persistencia de picks
     "redis>=5.0.0",
     "orjson>=3.9.0",
-    "pytz>=2023.3",
+    "pytz>=2024.1",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
