@@ -8,6 +8,46 @@ Este documento describe el **Sistema de Suscripciones Automatizado** que permite
 
 ---
 
+## 🎯 Decisión de Diseño: Bot-First
+
+> [!IMPORTANT]
+> El flujo de suscripción se realiza **exclusivamente a través del Bot de Telegram**, no desde la web.
+
+### ¿Por qué Bot-First?
+
+| Desde Web                                            | Desde Bot Telegram                        |
+| ---------------------------------------------------- | ----------------------------------------- |
+| ❌ Usuario escribe su @username manualmente           | ✅ Obtenemos `telegram_id` automáticamente |
+| ❌ Puede escribirlo mal → problemas de identificación | ✅ Sin errores, ID verificado              |
+| ❌ Hay que validar que el usuario de Telegram existe  | ✅ Ya sabemos que existe (nos escribió)    |
+| ❌ No podemos notificarle si no nos escribió primero  | ✅ Podemos enviarle mensajes directamente  |
+
+### Rol de cada componente
+
+| Componente       | Rol                                           | ¿Suscripción? |
+| ---------------- | --------------------------------------------- | ------------- |
+| **Bot Telegram** | Punto de entrada para suscripciones           | ✅ SÍ          |
+| **Web**          | Información, FAQ, términos, webhooks          | ❌ NO          |
+| **Userbot**      | Crear canales (técnico, invisible al usuario) | -             |
+
+### Flujo simplificado
+
+```
+Usuario ──▶ Bot (@RetadorBot) ──▶ /planes ──▶ Selecciona ──▶ Link Stripe
+                                                                │
+    ┌───────────────────────────────────────────────────────────┘
+    │
+    ▼
+Stripe Checkout (con telegram_id en metadata) ──▶ Webhook ──▶ Provisioning
+                                                                │
+    ┌───────────────────────────────────────────────────────────┘
+    │
+    ▼
+Bot envía invite link al usuario ──▶ Usuario se une al canal
+```
+
+---
+
 ## 🏗️ Arquitectura General
 
 ```
@@ -198,7 +238,17 @@ TELEGRAM_USERBOT_PHONE=+34600000000
 
 ## 🌐 Web (`src/web/`)
 
-Landing page minimalista con FastAPI + Jinja2.
+Landing page **informativa** con FastAPI + Jinja2.
+
+> [!NOTE]
+> La web **NO tiene formulario de suscripción**. Solo proporciona información y un enlace al Bot de Telegram. La suscripción se realiza exclusivamente a través del bot.
+
+### Propósito
+
+- **Información**: Explicar el servicio a visitantes
+- **SEO/Marketing**: Página indexable por buscadores
+- **Legal**: Términos, privacidad, FAQ
+- **Técnico**: Endpoint para webhooks de Stripe
 
 ### Endpoints
 
