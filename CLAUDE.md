@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Language**: Python 3.10+ (compatible with 3.10, 3.11, 3.12)
 - **Type**: Async application (asyncio)
-- **Status**: Implementation in progress - core structures defined, some components pending
+- **Status**: **Implementation pending** - All code files contain placeholders with TODOs
 
 ## Build & Development Commands
 
@@ -18,19 +18,20 @@ python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -e ".[dev]"   # Install with dev dependencies
 
-# Run application
-python -m scripts.run
-
 # Run tests
 pytest                              # All tests
 pytest tests/ -v --cov=src/domain   # With coverage
-pytest tests/unit/domain/ -k "validator or calculator"
+pytest tests/unit/domain/ -k "validator or calculator"  # Specific tests
 
 # Linting & formatting
 black src/ tests/
-ruff check src/ tests/              # Replaced flake8
+ruff check src/ tests/              # Lint check
 ruff check --fix src/ tests/        # Auto-fix issues
-mypy src/ --strict
+mypy src/ --strict                  # Type checking
+
+# Docker (when implemented)
+docker-compose up -d                # Production
+docker-compose -f docker-compose.dev.yml up  # Development
 ```
 
 ## Architecture
@@ -39,7 +40,7 @@ The system follows **Clean Architecture** as a modular monolith:
 
 ```
 src/
-├── domain/                    # Pure business logic
+├── domain/                    # Pure business logic (NO external dependencies)
 │   ├── entities/              # Pick, Surebet, Bookmaker
 │   ├── value_objects/         # Odds, Profit, MarketType
 │   ├── services/              # CalculationService, OppositeMarketService
@@ -48,55 +49,75 @@ src/
 │       └── validators/        # OddsValidator, ProfitValidator, TimeValidator, etc.
 ├── application/               # Use cases and orchestration
 │   ├── dto/                   # PickDTO for data transfer
-│   └── handlers/              # PickHandler
+│   └── handlers/              # PickHandler (orchestrates entire flow)
 ├── infrastructure/            # External integrations
 │   ├── api/                   # SurebetClient, RateLimiter
 │   ├── cache/                 # LocalCache
 │   ├── messaging/             # TelegramGateway, MessageFormatter
 │   └── repositories/          # RedisRepository, base interfaces
 ├── config/                    # Settings, bookmakers, logging
-└── shared/                    # Exceptions, constants
+├── shared/                    # Exceptions, constants
+├── subscriptions/             # Subscription system module (future)
+└── web/                       # Landing page and webhooks (future)
 ```
 
 ### Key External Dependencies
 - **aiohttp** - Async HTTP client for API polling
 - **aiogram** - Telegram Bot API wrapper
 - **redis** (async) - Deduplication and cursor persistence
-- **asyncpg** - PostgreSQL async driver (optional persistence)
 - **orjson** - Optimized JSON serialization
 - **pytz** - Timezone handling
+- **pydantic** - Settings and validation
 
 ### Core Data Flow
-1. **API Polling** → Fetch surebets from apostasseguras.com with cursor-based incremental polling and origin filtering (ADR-015)
-2. **Validation Chain** (fail-fast order): OddsValidator* → ProfitValidator* → TimeValidator → DuplicateValidator (Redis) → OppositeMarketValidator *(* = optional safety check)*
+1. **API Polling** → Fetch surebets with cursor-based incremental polling and origin filtering (ADR-015)
+2. **Validation Chain** (fail-fast): OddsValidator → ProfitValidator → TimeValidator → DuplicateValidator (Redis) → OppositeMarketValidator
 3. **Message Formatting** → Cache static parts (teams, tournament, date), compute dynamic parts (stake emoji, min_odds)
 4. **Telegram Delivery** → Priority heap queue with 5-bot rotation for throughput
 
-## Critical Architecture Decisions (from docs/03-ADRs.md)
+## Critical Architecture Decisions (ADRs)
 
 | Decision | Rationale |
 |----------|-----------|
-| NO Bloom Filter | 1% false positives = lost picks = lost money for bettors |
-| NO fire-and-forget Redis | Race conditions cause duplicates |
-| Redis pipeline batch | Balance latency vs reliability for dedup |
-| asyncio.gather (no workers) | Internal queues add latency; gather is sufficient for volume |
-| Cursor incremental | Avoid reprocessing already-handled picks |
-| Adaptive polling backoff | Auto-recovery from rate limits (0.5s base, 5.0s max) |
-| Priority heap for Telegram | Higher-value picks sent first; graceful degradation under load |
+| NO Bloom Filter (ADR-012) | 1% false positives = lost picks = lost money for bettors |
+| NO fire-and-forget Redis (ADR-013) | Race conditions cause duplicates |
+| Redis pipeline batch (ADR-004) | Balance latency vs reliability for dedup |
+| asyncio.gather, no workers (ADR-014) | Internal queues add latency; gather is sufficient |
+| Cursor incremental (ADR-009) | Avoid reprocessing already-handled picks |
+| Adaptive polling backoff (ADR-010) | Auto-recovery from rate limits (0.5s base, 5.0s max) |
+| Priority heap for Telegram (ADR-006) | Higher-value picks sent first; graceful degradation |
 | Origin filtering (ADR-015) | Filter at API level reduces data volume ~60-70% |
 
 ## Domain-Specific Calculations
 
-**Min Odds Formula** (Pinnacle-specific):
+**Min Odds Formula** (Pinnacle-specific, **CORRECTED** in v2.0):
 ```python
 min_odds = 1 / (1.01 - 1/odd_pinnacle)  # Exact cutoff at -1% profit
 ```
+⚠️ **IMPORTANT**: The legacy V6 formula was incorrect (ADR-003). Always use this corrected formula.
 
 **Stake Confidence by Profit**:
 - `-1% to -0.5%` → 🔴 Low
 - `-0.5% to 1.5%` → 🟠 Medium-low
 - `1.5% to 4%` → 🟡 Medium-high
 - `>4%` → 🟢 High
+
+## Implementation Status
+
+**Current State**: All Python files contain placeholder code with TODOs. Implementation follows phased approach:
+
+1. ✅ **Phase 0**: Setup complete (pyproject.toml, structure, dependencies)
+2. ⏳ **Phase 1**: Domain Core (Value Objects + Entities) - **TO DO**
+3. ⏳ **Phase 2**: Calculators (Strategy Pattern) - **TO DO**
+4. ⏳ **Phase 3**: Validators (Chain of Responsibility) - **TO DO**
+5. ⏳ **Phase 4**: Config (Pydantic Settings) - **TO DO**
+6. ⏳ **Phase 5A**: Infrastructure - Redis - **TO DO**
+7. ⏳ **Phase 5B**: Infrastructure - API Client - **TO DO**
+8. ⏳ **Phase 5C**: Infrastructure - Messaging - **TO DO**
+9. ⏳ **Phase 6**: Application Layer (Handler) - **TO DO**
+10. ⏳ **Phase 7**: Integration & Testing - **TO DO**
+
+**See** `docs/05-Implementation.md` for detailed task breakdown.
 
 ## Key Configuration Parameters
 
@@ -108,6 +129,33 @@ min_odds = 1 / (1.01 - 1/odd_pinnacle)  # Exact cutoff at -1% profit
 | `MAX_PROFIT` | 25.0 | Maximum profit threshold |
 | `POLLING_BASE_INTERVAL` | 0.5s | Base API poll interval |
 | `POLLING_MAX_INTERVAL` | 5.0s | Max interval under backoff |
+
+## Implementation Guidelines
+
+When implementing code from placeholders:
+
+1. **Read documentation first**: Each placeholder references relevant docs
+2. **Follow dependencies**: Implement in order (domain → application → infrastructure)
+3. **Test immediately**: Don't move to next component without tests
+4. **Consult legacy**: `legacy/RetadorV6.py` for reference (but use corrected formulas)
+5. **ADR-012 & ADR-013**: **Never** implement Bloom Filter or fire-and-forget Redis
+6. **ADR-003**: Always use the **corrected** min_odds formula
+
+## Critical Rules
+
+❌ **DO NOT**:
+- Implement Bloom Filter for Redis deduplication (ADR-012)
+- Use fire-and-forget pattern for Redis writes (ADR-013)
+- Use the legacy V6 min_odds formula (ADR-003)
+- Add workers/queues for processing (ADR-014)
+- Skip validation in favor of speed
+
+✅ **DO**:
+- Use Redis pipeline batch for deduplication
+- Always await Redis operations
+- Use corrected min_odds formula from ADR-003
+- Use asyncio.gather for parallel processing
+- Filter at API origin with optimized parameters
 
 ## Environment Variables
 
@@ -127,8 +175,49 @@ Configuration via `.env` file (see `.env.example`):
 ## Documentation
 
 - `/docs/01-SRS.md` - Software Requirements Specification
-- `/docs/02-PDR.md` - Preliminary Design Review
-- `/docs/03-ADRs.md` - Architecture Decision Records (14 decisions)
-- `/docs/04-Structure.md` - Project structure and module organization
-- `/docs/05-Implemetation.md` - Implementation tasks and guidelines
-- `/legacy/RetadorV6.py` - Previous implementation for reference
+- `/docs/02-PDR.md` - Preliminary Design Review (architecture diagrams)
+- `/docs/03-ADRs.md` - Architecture Decision Records (16 critical decisions)
+- `/docs/04-Structure.md` - Project structure guide for developers
+- `/docs/05-Implementation.md` - Implementation tasks and phase breakdown
+- `/legacy/RetadorV6.py` - Previous implementation (reference only, formulas may be incorrect)
+
+## Quick Reference: Where to Implement What
+
+| Feature | File(s) to Implement |
+|---------|---------------------|
+| Change stake profit ranges | `src/domain/services/calculators/pinnacle.py` |
+| Add new bookmaker | `src/config/bookmakers.py` |
+| Change message format | `src/infrastructure/messaging/message_formatter.py` |
+| Add new validation | `src/domain/rules/validators/` (new file) + update `validation_chain.py` |
+| Change API parameters | `src/infrastructure/api/surebet_client.py` |
+| Change polling behavior | `src/infrastructure/api/rate_limiter.py` |
+| Add new sharp calculator | `src/domain/services/calculators/` (new file) + update `factory.py` |
+
+## Common Development Patterns
+
+### Creating a Value Object
+```python
+# All value objects must:
+# - Be immutable (frozen dataclass)
+# - Validate in __post_init__
+# - Raise appropriate domain exception if invalid
+# - Be in src/domain/value_objects/
+```
+
+### Creating a Validator
+```python
+# All validators must:
+# - Inherit from BaseValidator
+# - Implement validate() returning ValidationResult
+# - Be chainable (set_next pattern)
+# - Have tests covering edge cases
+```
+
+### Creating a Calculator Strategy
+```python
+# All calculators must:
+# - Implement BaseCalculator interface
+# - Be registered in CalculatorFactory
+# - Have comprehensive tests with reference values
+# - Document formulas with ADR references
+```
