@@ -2,7 +2,7 @@
 ## Sistema Retador v2.0
 
 **Versión**: 2.1  
-**Fecha**: Diciembre 2024  
+**Fecha**: Diciembre 2025  
 **Estado**: Aprobado  
 **Última actualización**: Integración de optimizaciones V7
 
