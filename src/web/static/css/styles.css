@@ -1,0 +1,43 @@
+/* 
+ * Retador - Landing Page Styles
+ * =============================
+ * 
+ * TODO: Implementar estilos para la landing page
+ * 
+ * Secciones:
+ * - Variables CSS (colores, tipografía)
+ * - Reset y estilos base
+ * - Header y navegación
+ * - Hero section
+ * - Features section
+ * - Pricing section
+ * - FAQ section
+ * - Legal sections
+ * - Footer
+ * - Responsive breakpoints
+ */
+
+/* Variables */
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #1e40af;
+    --text-color: #1f2937;
+    --background-color: #f9fafb;
+    --border-color: #e5e7eb;
+}
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    line-height: 1.6;
+}
+
+/* TODO: Implementar resto de estilos */
