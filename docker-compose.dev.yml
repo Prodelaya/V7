@@ -1,0 +1,23 @@
+# Docker Compose for Development
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  retador:
+    build:
+      target: production
+    volumes:
+      # Hot-reload: mount source code
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    # Override command for development with auto-reload
+    # command: python -m scripts.run --debug
+
+  redis:
+    ports:
+      # Expose Redis for local debugging
+      - "6379:6379"

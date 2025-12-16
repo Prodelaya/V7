@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Retador v2.0 - Main Application
+  # ============================================
+  retador:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: retador-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - retador-network
+    # Resource limits for bmax90 (24GB RAM)
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Redis - Cache & Persistence
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: retador-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - retador-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  redis-data:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  retador-network:
+    driver: bridge
