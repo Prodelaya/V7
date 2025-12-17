@@ -99,24 +99,30 @@ src/subscriptions/
 │   │   ├── customer.py        # Cliente suscrito
 │   │   ├── service_plan.py    # Plan de suscripción (soft)
 │   │   ├── subscription.py    # Suscripción activa
+│   │   ├── payment_account.py # Cuentas de pago externas
 │   │   └── channel.py         # Canal de Telegram creado
+│   ├── ports/                 # 🆕 Interfaces (puertos)
+│   │   └── payment_gateway.py # Interfaz abstracta multi-gateway
 │   └── services/
 │       └── provisioning_service.py  # Orquestación de provisioning
 │
 ├── application/               # Capa de aplicación
 │   ├── handlers/
-│   │   ├── stripe_webhook_handler.py   # Procesa webhooks de Stripe
+│   │   ├── payment_webhook_handler.py  # Handler genérico
+│   │   ├── stripe_webhook_adapter.py   # Adaptador Stripe
 │   │   └── subscription_handler.py     # Lógica de suscripciones
 │   └── dto/
 │       └── subscription_dto.py         # DTOs para transferencia
 │
 └── infrastructure/            # Capa de infraestructura
-    ├── payments/
-    │   ├── stripe_client.py   # Cliente SDK de Stripe
-    │   └── stripe_config.py   # Config de productos/precios
+    ├── payments/              # 🆕 Multi-gateway
+    │   ├── gateway_factory.py # Factory para gateways
+    │   └── stripe/            # Adaptador Stripe
+    │       ├── stripe_gateway.py
+    │       └── stripe_config.py
     ├── telegram/
-    │   ├── subscription_bot.py    # 🤖 Bot de interacción con usuario
-    │   ├── userbot_client.py      # 👤 Userbot MTProto (Telethon)
+    │   ├── subscription_bot.py    # 🤖 Bot de interacción
+    │   ├── userbot_client.py      # 👤 Userbot MTProto
     │   └── channel_provisioner.py # Crear y configurar canales
     └── repositories/
         ├── customer_repository.py      # CRUD clientes
@@ -305,12 +311,14 @@ customer.subscription.deleted → Desactivar canal
 
 ### Tablas PostgreSQL
 
-| Tabla               | Descripción                                           |
-| ------------------- | ----------------------------------------------------- |
-| `customers`         | Clientes suscritos (telegram_id, stripe_customer_id)  |
-| `service_plans`     | Planes disponibles (soft_id, precio, stripe_price_id) |
-| `subscriptions`     | Suscripciones activas (estado, período)               |
-| `telegram_channels` | Canales creados (channel_id, invite_link)             |
+| Tabla                 | Descripción                                            |
+| --------------------- | ------------------------------------------------------ |
+| `customers`           | Clientes suscritos (telegram_id)                       |
+| `payment_accounts`    | Cuentas de pago externas por proveedor (multi-gateway) |
+| `service_plans`       | Planes disponibles (soft_id, precio)                   |
+| `plan_payment_prices` | Precios externos por proveedor (multi-gateway)         |
+| `subscriptions`       | Suscripciones activas (estado, período, proveedor)     |
+| `telegram_channels`   | Canales creados (channel_id, invite_link)              |
 
 ### Migraciones
 
@@ -319,7 +327,9 @@ migrations/
 ├── 001_create_customers.sql
 ├── 002_create_service_plans.sql
 ├── 003_create_subscriptions.sql
-└── 004_create_telegram_channels.sql
+├── 004_create_telegram_channels.sql
+├── 005_create_plan_payment_prices.sql   # Multi-gateway
+└── 006_create_payment_accounts.sql      # Multi-gateway
 ```
 
 ---

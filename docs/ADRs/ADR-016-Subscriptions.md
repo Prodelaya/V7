@@ -55,35 +55,56 @@ Los bots de Telegram (Bot API) no pueden crear canales. Solo pueden:
 
 ---
 
-### 2.2 Pagos: Stripe Checkout + Billing
+### 2.2 Pagos: Arquitectura Multi-Gateway
 
-#### Alternativas Evaluadas
+#### Decisión Inicial: Stripe
 
-| Opción               | Pros                                                 | Contras                              | Veredicto |
-| -------------------- | ---------------------------------------------------- | ------------------------------------ | --------- |
-| **Stripe**           | Webhooks robustos, SDK Python, suscripciones nativas | Comisión ~2.9% + 0.25€               | ✅ Elegido |
-| PayPal               | Conocido                                             | Webhooks menos fiables, más fricción | ❌         |
-| Paddle               | Gestiona IVA                                         | Menos flexible, más comisión         | ❌         |
-| LemonSqueezy         | Simple                                               | Menos features enterprise            | ❌         |
-| Transferencia manual | Sin comisión                                         | No automatizable                     | ❌         |
+Stripe es el proveedor inicial por su robustez, pero la arquitectura está diseñada para soportar múltiples proveedores.
 
-#### Decisión: Stripe Checkout Hosted + Billing
+| Opción     | Pros                                                 | Contras                              | Veredicto |
+| ---------- | ---------------------------------------------------- | ------------------------------------ | --------- |
+| **Stripe** | Webhooks robustos, SDK Python, suscripciones nativas | Comisión ~2.9% + 0.25€               | ✅ Inicial |
+| PayPal     | Conocido                                             | Webhooks menos fiables, más fricción | 🔄 Futuro  |
+| Cryptomus  | Crypto nativo                                        | Sin suscripciones nativas            | 🔄 Futuro  |
 
-**Justificación**:
-- **Checkout hosted**: Cero frontend para pagos, PCI compliant automático
-- **Billing**: Suscripciones recurrentes nativas
-- **Webhooks**: Eventos fiables para automatización
-- **Customer Portal**: Gestión self-service para clientes
-- **SDK Python**: `stripe` bien documentado y async-compatible
+#### Arquitectura Multi-Gateway
 
-#### Eventos webhook clave
 ```
-checkout.session.completed  → Crear suscripción inicial
-invoice.paid                → Renovación exitosa
-invoice.payment_failed      → Fallo de pago
-customer.subscription.deleted → Cancelación
-customer.subscription.updated → Cambios de plan
+domain/ports/
+└── payment_gateway.py    ← Interfaz abstracta (puerto)
+
+infrastructure/payments/
+├── gateway_factory.py    ← Factory para instanciar gateways
+├── stripe/               ← Adaptador Stripe
+│   ├── stripe_gateway.py
+│   └── stripe_config.py
+├── paypal/               ← Futuro
+└── cryptomus/            ← Futuro
 ```
+
+**Principio**: Dependency Inversion. El dominio define el puerto (PaymentGateway), la infraestructura provee adaptadores.
+
+#### PaymentGateway Interface
+
+```python
+class PaymentGateway(ABC):
+    @abstractmethod
+    async def create_checkout_session(...) -> CheckoutSession: ...
+    
+    @abstractmethod
+    async def cancel_subscription(subscription_id: str) -> bool: ...
+    
+    @abstractmethod
+    def parse_webhook(payload: bytes, signature: str) -> PaymentEvent: ...
+```
+
+#### Eventos Normalizados
+
+| PaymentEvent.event_type | Stripe                        | PayPal           |
+| ----------------------- | ----------------------------- | ---------------- |
+| payment_completed       | checkout.session.completed    | PAYMENT.CAPTURE  |
+| payment_failed          | invoice.payment_failed        | PAYMENT.FAILED   |
+| subscription_cancelled  | customer.subscription.deleted | SUBSCRIPTION.END |
 
 ---
 
@@ -159,18 +180,28 @@ Ver [Estructura de Carpetas](#estructura-de-carpetas-completa) en el apéndice.
 ## 4. Modelo de Datos
 
 ```sql
--- Clientes
+-- Clientes (sin IDs de pasarelas - ver payment_accounts)
 CREATE TABLE customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     telegram_id BIGINT UNIQUE NOT NULL,
     telegram_username VARCHAR(255),
     email VARCHAR(255),
-    stripe_customer_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Planes de servicio (una entrada por soft)
+-- Cuentas de pago externas (multi-gateway)
+CREATE TABLE payment_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,          -- stripe, paypal, cryptomus
+    external_customer_id VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(customer_id, provider)
+);
+
+-- Planes de servicio (sin IDs de precios - ver plan_payment_prices)
 CREATE TABLE service_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     soft_id VARCHAR(50) UNIQUE NOT NULL,    -- 'retabet', 'sportium'
@@ -178,24 +209,34 @@ CREATE TABLE service_plans (
     description TEXT,
     price_cents INTEGER NOT NULL,
     currency VARCHAR(3) DEFAULT 'EUR',
-    stripe_price_id VARCHAR(255) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Suscripciones
+-- Precios externos por proveedor (multi-gateway)
+CREATE TABLE plan_payment_prices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    plan_id UUID NOT NULL REFERENCES service_plans(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,          -- stripe, paypal, cryptomus
+    external_price_id VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(plan_id, provider)
+);
+
+-- Suscripciones (agnóstico de proveedor)
 CREATE TABLE subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID REFERENCES customers(id),
     plan_id UUID REFERENCES service_plans(id),
-    stripe_subscription_id VARCHAR(255) UNIQUE,
+    external_subscription_id VARCHAR(255),
+    payment_provider VARCHAR(50) NOT NULL,  -- stripe, paypal, cryptomus
     status VARCHAR(50) NOT NULL,            -- active, canceled, past_due
     current_period_start TIMESTAMPTZ,
     current_period_end TIMESTAMPTZ,
     cancel_at_period_end BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
     UNIQUE(customer_id, plan_id)
 );
 
@@ -212,9 +253,11 @@ CREATE TABLE telegram_channels (
 
 -- Índices
 CREATE INDEX idx_customers_telegram ON customers(telegram_id);
-CREATE INDEX idx_customers_stripe ON customers(stripe_customer_id);
+CREATE INDEX idx_payment_accounts_customer ON payment_accounts(customer_id);
+CREATE INDEX idx_plan_prices_plan ON plan_payment_prices(plan_id);
 CREATE INDEX idx_subscriptions_customer ON subscriptions(customer_id);
 CREATE INDEX idx_subscriptions_status ON subscriptions(status);
+CREATE INDEX idx_subscriptions_provider ON subscriptions(payment_provider);
 CREATE INDEX idx_channels_active ON telegram_channels(is_active) WHERE is_active = TRUE;
 ```
 
@@ -339,7 +382,11 @@ src/
 │   │   │   ├── customer.py
 │   │   │   ├── service_plan.py
 │   │   │   ├── subscription.py
+│   │   │   ├── payment_account.py    # 🆕 Multi-gateway
 │   │   │   └── channel.py
+│   │   ├── ports/                    # 🆕 PUERTOS (interfaces)
+│   │   │   ├── __init__.py
+│   │   │   └── payment_gateway.py    # Interfaz abstracta
 │   │   └── services/
 │   │       ├── __init__.py
 │   │       └── provisioning_service.py
@@ -347,17 +394,21 @@ src/
 │   │   ├── __init__.py
 │   │   ├── handlers/
 │   │   │   ├── __init__.py
-│   │   │   ├── stripe_webhook_handler.py
+│   │   │   ├── payment_webhook_handler.py   # 🆕 Handler genérico
+│   │   │   ├── stripe_webhook_adapter.py    # 🆕 Adaptador Stripe
 │   │   │   └── subscription_handler.py
 │   │   └── dto/
 │   │       ├── __init__.py
 │   │       └── subscription_dto.py
 │   └── infrastructure/
 │       ├── __init__.py
-│       ├── payments/
+│       ├── payments/                 # 🔄 REORGANIZADO
 │       │   ├── __init__.py
-│       │   ├── stripe_client.py
-│       │   └── stripe_config.py
+│       │   ├── gateway_factory.py    # 🆕 Factory
+│       │   └── stripe/               # 🆕 Subcarpeta por proveedor
+│       │       ├── __init__.py
+│       │       ├── stripe_gateway.py # Implementa PaymentGateway
+│       │       └── stripe_config.py
 │       ├── telegram/
 │       │   ├── __init__.py
 │       │   ├── subscription_bot.py
@@ -396,7 +447,9 @@ migrations/
 ├── 001_create_customers.sql
 ├── 002_create_service_plans.sql
 ├── 003_create_subscriptions.sql
-└── 004_create_telegram_channels.sql
+├── 004_create_telegram_channels.sql
+├── 005_create_plan_payment_prices.sql  # 🆕 Multi-gateway
+└── 006_create_payment_accounts.sql     # 🆕 Multi-gateway
 
 tests/
 ├── unit/subscriptions/
