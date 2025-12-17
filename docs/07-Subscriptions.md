@@ -334,22 +334,141 @@ migrations/
 
 ---
 
-## 🔗 Integración con Core
+## 🔌 Extensibilidad: Añadir Nuevos Proveedores de Pago
 
-El módulo de suscripciones se conecta con el core de envío de picks a través de:
+> [!NOTE]
+> La arquitectura está diseñada para soportar múltiples pasarelas de pago (Stripe, PayPal, Cryptomus, etc.) sin modificar el dominio ni la lógica de negocio.
 
-```
-src/infrastructure/messaging/pick_router.py
-```
-
-Este archivo consulta los canales activos por `soft_id` y enruta los picks a los canales correspondientes.
+### Arquitectura Multi-Gateway
 
 ```
-Core (telegram_gateway.py)
-    └─► pick_router.py
-        └─► Consulta canales activos para la soft
-            └─► Envía pick a cada canal del cliente
+domain/ports/
+└── payment_gateway.py      ← Interfaz abstracta (no tocar)
+
+infrastructure/payments/
+├── gateway_factory.py      ← Registrar nuevo gateway aquí
+├── stripe/                 ← Implementación actual
+│   ├── stripe_gateway.py
+│   └── stripe_config.py
+├── paypal/                 ← FUTURO
+│   ├── paypal_gateway.py
+│   └── paypal_config.py
+└── cryptomus/              ← FUTURO
+    ├── cryptomus_gateway.py
+    └── cryptomus_config.py
 ```
+
+### Pasos para Añadir un Nuevo Proveedor
+
+#### 1. Crear subcarpeta del proveedor
+
+```bash
+mkdir -p src/subscriptions/infrastructure/payments/paypal
+touch src/subscriptions/infrastructure/payments/paypal/__init__.py
+```
+
+#### 2. Implementar el Gateway
+
+```python
+# paypal_gateway.py
+from subscriptions.domain.ports import PaymentGateway, CheckoutSession, PaymentEvent
+
+class PayPalGateway(PaymentGateway):
+    async def create_checkout_session(self, plan_id, customer_telegram_id, ...) -> CheckoutSession:
+        # Implementar con PayPal REST API
+        pass
+    
+    async def cancel_subscription(self, subscription_id: str) -> bool:
+        # Implementar cancelación
+        pass
+    
+    def parse_webhook(self, payload: bytes, signature: str) -> PaymentEvent:
+        # Convertir eventos PayPal → PaymentEvent normalizado
+        pass
+```
+
+#### 3. Crear Adapter de Webhooks
+
+```python
+# application/handlers/paypal_webhook_adapter.py
+class PayPalWebhookAdapter:
+    """Convierte webhooks de PayPal a PaymentEvent."""
+    
+    EVENT_MAP = {
+        "PAYMENT.CAPTURE.COMPLETED": "payment_completed",
+        "BILLING.SUBSCRIPTION.CANCELLED": "subscription_cancelled",
+    }
+```
+
+#### 4. Registrar en el Factory
+
+```python
+# gateway_factory.py
+from .paypal import PayPalGateway
+
+class GatewayFactory:
+    _registry = {
+        "stripe": StripeGateway,
+        "paypal": PayPalGateway,  # ← Añadir aquí
+    }
+```
+
+#### 5. Añadir endpoint de webhook
+
+```python
+# web/routes/webhooks.py
+@router.post("/webhooks/paypal")
+async def paypal_webhook(request: Request):
+    adapter = PayPalWebhookAdapter()
+    event = adapter.parse(await request.body())
+    await payment_handler.handle(event)
+```
+
+#### 6. Configurar precios en BD
+
+```sql
+INSERT INTO plan_payment_prices (plan_id, provider, external_price_id)
+VALUES 
+  ('uuid-retabet', 'paypal', 'PAYPAL-PLAN-XXX'),
+  ('uuid-sportium', 'paypal', 'PAYPAL-PLAN-YYY');
+```
+
+### Mapeo de Eventos por Proveedor
+
+| PaymentEvent             | Stripe                          | PayPal                           | Cryptomus        |
+| ------------------------ | ------------------------------- | -------------------------------- | ---------------- |
+| `payment_completed`      | `checkout.session.completed`    | `PAYMENT.CAPTURE.COMPLETED`      | `payment:paid`   |
+| `payment_failed`         | `invoice.payment_failed`        | `PAYMENT.CAPTURE.DENIED`         | `payment:cancel` |
+| `subscription_cancelled` | `customer.subscription.deleted` | `BILLING.SUBSCRIPTION.CANCELLED` | N/A              |
+
+### Variables de Entorno por Proveedor
+
+```env
+# === STRIPE (actual) ===
+STRIPE_SECRET_KEY=sk_xxx
+STRIPE_PUBLISHABLE_KEY=pk_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+# === PAYPAL (futuro) ===
+PAYPAL_CLIENT_ID=xxx
+PAYPAL_CLIENT_SECRET=xxx
+PAYPAL_WEBHOOK_ID=xxx
+PAYPAL_MODE=sandbox  # o 'live'
+
+# === CRYPTOMUS (futuro) ===
+CRYPTOMUS_MERCHANT_ID=xxx
+CRYPTOMUS_API_KEY=xxx
+CRYPTOMUS_WEBHOOK_SECRET=xxx
+```
+
+### Lo que NO hay que modificar
+
+| Componente                        | Razón                        |
+| --------------------------------- | ---------------------------- |
+| `domain/entities/*`               | Agnósticos de proveedor      |
+| `domain/ports/payment_gateway.py` | Interfaz estable             |
+| `payment_webhook_handler.py`      | Procesa eventos normalizados |
+| `provisioning_service.py`         | Solo recibe PaymentEvent     |
 
 ---
 
@@ -383,5 +502,8 @@ WEB_BASE_URL=https://retador.es
 - [ADR-016: Sistema de Suscripciones Automatizado](./ADRs/ADR-016-Subscriptions.md)
 - [05-Implementation.md](./05-Implemetation.md) - Core de picks
 - [Stripe Billing Docs](https://stripe.com/docs/billing)
+- [PayPal Subscriptions API](https://developer.paypal.com/docs/subscriptions/)
+- [Cryptomus API](https://doc.cryptomus.com/)
 - [Telethon Docs](https://docs.telethon.dev/)
 - [aiogram Docs](https://docs.aiogram.dev/)
+
