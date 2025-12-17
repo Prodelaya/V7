@@ -11,8 +11,18 @@ Atributos:
     - description: Descripción del plan
     - price_cents: Precio en céntimos
     - currency: Moneda (EUR por defecto)
-    - stripe_price_id: ID del precio en Stripe
     - is_active: Si el plan está activo
+    - created_at: Fecha de creación
+
+Relaciones:
+    - payment_prices: Diccionario de precios externos por proveedor (1:N)
+      Almacenado en tabla plan_payment_prices.
+      Ejemplo: {'stripe': 'price_xxx', 'paypal': 'plan_yyy'}
+
+Nota:
+    Los IDs de precios en pasarelas de pago externas (stripe_price_id, etc.)
+    se almacenan en la tabla plan_payment_prices, no en esta entidad.
+    Esto permite configurar precios diferentes por proveedor de pago.
 
 TODO: Implementar dataclass o Pydantic model con validaciones
 """
