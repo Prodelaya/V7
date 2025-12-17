@@ -1,6 +1,6 @@
 -- Migration: 003_create_subscriptions
 -- Description: Creates the subscriptions table for active customer subscriptions
--- Date: December 2024
+-- Date: December 2025
 -- ADR: ADR-016
 
 -- TODO: Implementar migración
@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
     plan_id UUID REFERENCES service_plans(id),
-    stripe_subscription_id VARCHAR(255) UNIQUE,
+    external_subscription_id VARCHAR(255),
+    payment_provider VARCHAR(50) NOT NULL DEFAULT 'stripe',
     status VARCHAR(50) NOT NULL,            -- active, canceled, past_due
     current_period_start TIMESTAMPTZ,
     current_period_end TIMESTAMPTZ,
@@ -24,8 +25,11 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_subscriptions_customer ON subscriptions(customer_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe ON subscriptions(stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_external ON subscriptions(external_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_provider ON subscriptions(payment_provider);
 
 -- Comentarios
 COMMENT ON TABLE subscriptions IS 'Suscripciones activas de clientes a planes';
 COMMENT ON COLUMN subscriptions.status IS 'Estado: active, canceled, past_due';
+COMMENT ON COLUMN subscriptions.external_subscription_id IS 'ID de la suscripción en la pasarela de pago';
+COMMENT ON COLUMN subscriptions.payment_provider IS 'Proveedor de pago: stripe, paypal, cryptomus';
