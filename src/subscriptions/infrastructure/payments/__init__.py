@@ -1,5 +1,18 @@
 # Payments Infrastructure
-from .stripe_client import StripeClient
-from .stripe_config import StripeConfig
+#
+# Arquitectura multi-gateway para pasarelas de pago.
+#
+# Componentes:
+#   - GatewayFactory: Factory para instanciar gateways
+#   - stripe/: Adaptador para Stripe
+#   - paypal/: Adaptador para PayPal (futuro)
+#   - cryptomus/: Adaptador para Cryptomus (futuro)
+#
+# Uso:
+#   from subscriptions.infrastructure.payments import GatewayFactory
+#   gateway = GatewayFactory.create('stripe')
 
-__all__ = ["StripeClient", "StripeConfig"]
+from .gateway_factory import GatewayFactory
+from .stripe import StripeGateway, StripeConfig
+
+__all__ = ["GatewayFactory", "StripeGateway", "StripeConfig"]

@@ -14,6 +14,10 @@ Variables de entorno:
     - STRIPE_PUBLISHABLE_KEY
     - STRIPE_WEBHOOK_SECRET
 
+Nota:
+    Los price_ids también se almacenan en la tabla plan_payment_prices
+    para permitir gestión dinámica. Esta config es para valores por defecto.
+
 TODO: Implementar clase de configuración con Pydantic Settings
 """
 
