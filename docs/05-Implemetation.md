@@ -510,7 +510,7 @@ async def main():
 
 ```
 Fase 0:  Setup          [████] 100%
-Fase 1:  Domain Core    [____] 0%
+Fase 1:  Domain Core    [█___] 22%  (2/9: Excepciones + Odds VO)
 Fase 2:  Calculators    [____] 0%
 Fase 3:  Validators     [____] 0%
 Fase 4:  Config         [____] 0%
@@ -520,7 +520,7 @@ Fase 5C: Messaging      [____] 0%
 Fase 6:  Application    [____] 0%
 Fase 7:  Integración    [____] 0%
 
-Total: 9/57 tareas completadas
+Total: 11/57 tareas completadas
 ```
 
 ---
