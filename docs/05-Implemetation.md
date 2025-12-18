@@ -136,7 +136,7 @@ Implementar los tipos de datos fundamentales con validación automática.
 
 ### Checklist Fase 1
 - [x] 1.1 Excepciones
-- [ ] 1.2 Odds VO
+- [x] 1.2 Odds VO
 - [ ] 1.3 Profit VO
 - [ ] 1.4 MarketType enum
 - [ ] 1.5 Tests VOs
