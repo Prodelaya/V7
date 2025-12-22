@@ -95,18 +95,17 @@ Implementar los tipos de datos fundamentales con validación automática.
 
 ### Backlog
 
-| ID   | Tarea                                | Archivo                                   | Dependencia  | Criterio de Aceptación                           |
-| ---- | ------------------------------------ | ----------------------------------------- | ------------ | ------------------------------------------------ |
-| 1.1  | Implementar excepciones de dominio   | `shared/exceptions.py`                    | -            | Clases de error definidas                        |
-| 1.2  | Implementar `Odds` value object      | `domain/value_objects/odds.py`            | 1.1          | `Odds(2.05)` ✅, `Odds(0.5)` ❌ lanza error        |
-| 1.3  | Implementar `Profit` value object    | `domain/value_objects/profit.py`          | 1.1          | `Profit(2.5)` ✅, `Profit(150)` ❌                 |
-| 1.4  | Implementar `MarketType` enum        | `domain/value_objects/market_type.py`     | -            | Enum con over, under, win1, etc.                 |
-| 1.4b | Definir `OPPOSITE_MARKETS` constante | `shared/constants.py`                     | 1.4          | Mapa completo de mercados opuestos (ver SRS 6.1) |
-| 1.5  | Tests de Value Objects               | `tests/unit/domain/test_value_objects.py` | 1.2-1.4b     | 100% cobertura de VOs                            |
-| 1.6  | Implementar entidad `Bookmaker`      | `domain/entities/bookmaker.py`            | -            | Enum Sharp/Soft + config                         |
-| 1.7  | Implementar entidad `Pick`           | `domain/entities/pick.py`                 | 1.2-1.4, 1.6 | Dataclass inmutable validada                     |
-| 1.8  | Implementar entidad `Surebet`        | `domain/entities/surebet.py`              | 1.7          | Dos prongs + profit                              |
-| 1.9  | Tests de Entidades                   | `tests/unit/domain/test_entities.py`      | 1.6-1.8      | 100% cobertura                                   |
+| ID  | Tarea                              | Archivo                                   | Dependencia  | Criterio de Aceptación                         |
+| --- | ---------------------------------- | ----------------------------------------- | ------------ | ---------------------------------------------- |
+| 1.1 | Implementar excepciones de dominio | `shared/exceptions.py`                    | -            | Clases de error definidas                      |
+| 1.2 | Implementar `Odds` value object    | `domain/value_objects/odds.py`            | 1.1          | `Odds(2.05)` ✅, `Odds(0.5)` ❌ lanza error      |
+| 1.3 | Implementar `Profit` value object  | `domain/value_objects/profit.py`          | 1.1          | `Profit(2.5)` ✅, `Profit(150)` ❌               |
+| 1.4 | Implementar `MarketType` enum      | `domain/value_objects/market_type.py`     | -            | Enum + get_opposites() + OPPOSITE_MARKETS dict |
+| 1.5 | Tests de Value Objects             | `tests/unit/domain/test_value_objects.py` | 1.2-1.4      | 100% cobertura de VOs                          |
+| 1.6 | Implementar entidad `Bookmaker`    | `domain/entities/bookmaker.py`            | -            | Enum Sharp/Soft + config                       |
+| 1.7 | Implementar entidad `Pick`         | `domain/entities/pick.py`                 | 1.2-1.4, 1.6 | Dataclass inmutable validada                   |
+| 1.8 | Implementar entidad `Surebet`      | `domain/entities/surebet.py`              | 1.7          | Dos prongs + profit                            |
+| 1.9 | Tests de Entidades                 | `tests/unit/domain/test_entities.py`      | 1.6-1.8      | 100% cobertura                                 |
 
 ### Detalle de Tareas Clave
 
@@ -138,7 +137,7 @@ Implementar los tipos de datos fundamentales con validación automática.
 - [x] 1.1 Excepciones
 - [x] 1.2 Odds VO
 - [x] 1.3 Profit VO
-- [x] 1.4 MarketType enum
+- [x] 1.4 MarketType enum + OPPOSITE_MARKETS
 - [ ] 1.5 Tests VOs
 - [ ] 1.6 Bookmaker entity
 - [ ] 1.7 Pick entity
@@ -510,7 +509,7 @@ async def main():
 
 ```
 Fase 0:  Setup          [████] 100%
-Fase 1:  Domain Core    [██__] 44%  (4/9: Excepciones + Odds + Profit + MarketType)
+Fase 1:  Domain Core    [██__] 50%  (4/8: Excepciones + Odds + Profit + MarketType)
 Fase 2:  Calculators    [____] 0%
 Fase 3:  Validators     [____] 0%
 Fase 4:  Config         [____] 0%
@@ -520,7 +519,7 @@ Fase 5C: Messaging      [____] 0%
 Fase 6:  Application    [____] 0%
 Fase 7:  Integración    [____] 0%
 
-Total: 13/57 tareas completadas
+Total: 13/56 tareas completadas
 ```
 
 ---
