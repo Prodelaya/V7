@@ -17,8 +17,10 @@ import pytest
 
 from src.domain.entities.bookmaker import Bookmaker, BookmakerType
 from src.domain.entities.pick import Pick
+from src.domain.entities.surebet import SHARP_BOOKMAKERS, Surebet
 from src.domain.value_objects.market_type import MarketType
 from src.domain.value_objects.odds import Odds
+from src.domain.value_objects.profit import Profit
 
 
 class TestBookmakerType:
@@ -839,3 +841,646 @@ class TestPickEquality:
             bookmaker="test",
         )
         assert pick1 != pick2
+
+
+# =============================================================================
+# SUREBET ENTITY TESTS
+# =============================================================================
+
+
+
+
+@pytest.fixture
+def sharp_pick() -> Pick:
+    """Fixture providing a valid sharp (Pinnacle) pick."""
+    return Pick(
+        teams=("Team A", "Team B"),
+        odds=Odds(2.10),
+        market_type=MarketType.OVER,
+        variety="2.5",
+        event_time=datetime(2025, 12, 25, 15, 0, 0, tzinfo=timezone.utc),
+        bookmaker="pinnaclesports",
+        tournament="Premier League",
+        sport_id="Football",
+    )
+
+
+@pytest.fixture
+def soft_pick() -> Pick:
+    """Fixture providing a valid soft (Retabet) pick."""
+    return Pick(
+        teams=("Team A", "Team B"),
+        odds=Odds(2.05),
+        market_type=MarketType.UNDER,
+        variety="2.5",
+        event_time=datetime(2025, 12, 25, 15, 0, 0, tzinfo=timezone.utc),
+        bookmaker="retabet_apuestas",
+        tournament="Premier League",
+        sport_id="Football",
+    )
+
+
+@pytest.fixture
+def valid_surebet_api_response() -> dict:
+    """Fixture providing valid API response for a surebet."""
+    return {
+        "id": 785141488,
+        "sort_by": 4609118910833099900,
+        "time": 1735135200000,
+        "created": 1735000000000,
+        "profit": 2.5,
+        "roi": 222.6584,
+        "prongs": [
+            {
+                "id": 460444138,
+                "teams": ["Fnatic", "G2"],
+                "value": 2.10,
+                "bk": "pinnaclesports",
+                "time": 1735135200000,
+                "type": {
+                    "type": "over",
+                    "variety": "2.5",
+                    "condition": "2.5",
+                    "period": "regular",
+                    "base": "overall",
+                },
+                "tournament": "BLAST Paris Major",
+                "sport_id": "CounterStrike",
+            },
+            {
+                "id": 460444139,
+                "teams": ["Fnatic", "G2"],
+                "value": 2.05,
+                "bk": "retabet_apuestas",
+                "time": 1735135200000,
+                "type": {
+                    "type": "under",
+                    "variety": "2.5",
+                    "condition": "2.5",
+                    "period": "regular",
+                    "base": "overall",
+                },
+                "tournament": "BLAST Paris Major",
+                "sport_id": "CounterStrike",
+            },
+        ],
+    }
+
+
+class TestSharpBookmakers:
+    """Tests for SHARP_BOOKMAKERS constant."""
+
+    def test_pinnacle_is_sharp(self) -> None:
+        """pinnaclesports should be in SHARP_BOOKMAKERS."""
+        assert "pinnaclesports" in SHARP_BOOKMAKERS
+
+    def test_sharp_bookmakers_is_frozen(self) -> None:
+        """SHARP_BOOKMAKERS should be a frozenset."""
+        assert isinstance(SHARP_BOOKMAKERS, frozenset)
+
+    def test_sharp_bookmakers_not_empty(self) -> None:
+        """SHARP_BOOKMAKERS should have at least one member."""
+        assert len(SHARP_BOOKMAKERS) >= 1
+
+
+class TestSurebetCreation:
+    """Tests for direct Surebet creation."""
+
+    def test_create_valid_surebet(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """Should create Surebet with valid prongs."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+        )
+        assert surebet.prong_sharp == sharp_pick
+        assert surebet.prong_soft == soft_pick
+        assert surebet.profit.value == 2.5
+
+    def test_create_surebet_with_optional_fields(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """Should create Surebet with optional surebet_id and created."""
+        created_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+            surebet_id=12345,
+            created=created_time,
+        )
+        assert surebet.surebet_id == 12345
+        assert surebet.created == created_time
+
+    def test_surebet_defaults(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """Optional fields should have correct defaults."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(1.0),
+        )
+        assert surebet.surebet_id is None
+        assert surebet.created is None
+
+
+class TestSurebetValidation:
+    """Tests for Surebet validation in __post_init__."""
+
+    def test_same_bookmaker_raises_error(self, soft_pick: Pick) -> None:
+        """prong_sharp and prong_soft cannot be from same bookmaker."""
+        # Create two picks from the same bookmaker
+        pick1 = Pick(
+            teams=("A", "B"),
+            odds=Odds(2.0),
+            market_type=MarketType.WIN1,
+            variety="",
+            event_time=datetime.now(timezone.utc),
+            bookmaker="retabet_apuestas",
+        )
+        pick2 = Pick(
+            teams=("A", "B"),
+            odds=Odds(2.5),
+            market_type=MarketType.WIN2,
+            variety="",
+            event_time=datetime.now(timezone.utc),
+            bookmaker="retabet_apuestas",  # Same bookmaker
+        )
+        with pytest.raises(ValueError, match="cannot be from the same bookmaker"):
+            Surebet(
+                prong_sharp=pick1,
+                prong_soft=pick2,
+                profit=Profit(1.0),
+            )
+
+    def test_different_bookmakers_allowed(self) -> None:
+        """Prongs from different non-sharp bookmakers should be allowed."""
+        # Note: Since __post_init__ doesn't validate against SHARP_BOOKMAKERS,
+        # this allows for flexible use cases and custom sharp configurations
+        pick1 = Pick(
+            teams=("A", "B"),
+            odds=Odds(2.0),
+            market_type=MarketType.WIN1,
+            variety="",
+            event_time=datetime.now(timezone.utc),
+            bookmaker="bet365",  # Not in default SHARP_BOOKMAKERS
+        )
+        pick2 = Pick(
+            teams=("A", "B"),
+            odds=Odds(2.5),
+            market_type=MarketType.WIN2,
+            variety="",
+            event_time=datetime.now(timezone.utc),
+            bookmaker="retabet_apuestas",
+        )
+        # This should not raise - validation of sharp/soft is done by from_api_response
+        surebet = Surebet(
+            prong_sharp=pick1,
+            prong_soft=pick2,
+            profit=Profit(1.0),
+        )
+        assert surebet.prong_sharp.bookmaker == "bet365"
+
+    def test_created_must_be_timezone_aware(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """created must have timezone info if provided."""
+        naive_time = datetime(2025, 1, 1, 12, 0, 0)  # No timezone
+        with pytest.raises(ValueError, match="timezone-aware"):
+            Surebet(
+                prong_sharp=sharp_pick,
+                prong_soft=soft_pick,
+                profit=Profit(1.0),
+                created=naive_time,
+            )
+
+
+class TestSurebetFromApiResponse:
+    """Tests for Surebet.from_api_response() factory method."""
+
+    def test_create_from_valid_response(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should create Surebet from valid API response."""
+        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        assert surebet.sharp_bookmaker == "pinnaclesports"
+        assert surebet.soft_bookmaker == "retabet_apuestas"
+        assert surebet.profit.value == 2.5
+        assert surebet.teams == ("Fnatic", "G2")
+
+    def test_determines_roles_correctly_pinnacle_first(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should correctly identify sharp when Pinnacle is first prong."""
+        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        assert surebet.prong_sharp.bookmaker == "pinnaclesports"
+        assert surebet.prong_soft.bookmaker == "retabet_apuestas"
+
+    def test_determines_roles_correctly_pinnacle_second(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should correctly identify sharp when Pinnacle is second prong."""
+        # Swap the order of prongs
+        valid_surebet_api_response["prongs"] = [
+            valid_surebet_api_response["prongs"][1],  # retabet first
+            valid_surebet_api_response["prongs"][0],  # pinnacle second
+        ]
+        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        assert surebet.prong_sharp.bookmaker == "pinnaclesports"
+        assert surebet.prong_soft.bookmaker == "retabet_apuestas"
+
+    def test_extracts_surebet_id(self, valid_surebet_api_response: dict) -> None:
+        """Should extract surebet_id from API response."""
+        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        assert surebet.surebet_id == 785141488
+
+    def test_extracts_created_timestamp(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should convert created timestamp from ms to datetime."""
+        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        assert surebet.created is not None
+        assert surebet.created.tzinfo == timezone.utc
+
+    def test_missing_profit_raises_error(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should raise error if profit is missing."""
+        del valid_surebet_api_response["profit"]
+        with pytest.raises(ValueError, match="Missing 'profit'"):
+            Surebet.from_api_response(valid_surebet_api_response)
+
+    def test_missing_prongs_raises_error(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should raise error if prongs is missing."""
+        del valid_surebet_api_response["prongs"]
+        with pytest.raises(ValueError, match="Expected exactly 2 prongs"):
+            Surebet.from_api_response(valid_surebet_api_response)
+
+    def test_wrong_prongs_count_raises_error(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should raise error if prongs count is not 2."""
+        valid_surebet_api_response["prongs"] = [
+            valid_surebet_api_response["prongs"][0]
+        ]
+        with pytest.raises(ValueError, match="Expected exactly 2 prongs"):
+            Surebet.from_api_response(valid_surebet_api_response)
+
+    def test_no_sharp_bookmaker_raises_error(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should raise error if neither prong is from a sharp bookmaker."""
+        valid_surebet_api_response["prongs"][0]["bk"] = "bet365"
+        valid_surebet_api_response["prongs"][1]["bk"] = "retabet_apuestas"
+        with pytest.raises(ValueError, match="No sharp bookmaker found"):
+            Surebet.from_api_response(valid_surebet_api_response)
+
+    def test_custom_sharp_bookmakers(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should accept custom sharp_bookmakers set."""
+        # Change first prong to bet365
+        valid_surebet_api_response["prongs"][0]["bk"] = "bet365"
+        # Use custom sharp set that includes bet365
+        custom_sharps = frozenset({"bet365"})
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=custom_sharps
+        )
+        assert surebet.sharp_bookmaker == "bet365"
+
+    def test_handles_missing_created(
+        self, valid_surebet_api_response: dict
+    ) -> None:
+        """Should handle missing created field gracefully."""
+        del valid_surebet_api_response["created"]
+        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        assert surebet.created is None
+
+    def test_handles_missing_id(self, valid_surebet_api_response: dict) -> None:
+        """Should handle missing id field gracefully."""
+        del valid_surebet_api_response["id"]
+        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        assert surebet.surebet_id is None
+
+
+class TestSurebetToPick:
+    """Tests for to_pick() method."""
+
+    def test_to_pick_returns_soft_prong(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """to_pick() should return the soft prong."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        pick = surebet.to_pick()
+        assert pick == soft_pick
+        assert pick.bookmaker == "retabet_apuestas"
+
+    def test_to_pick_returns_pick_type(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """to_pick() should return Pick instance."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        pick = surebet.to_pick()
+        assert isinstance(pick, Pick)
+
+
+class TestSurebetProperties:
+    """Tests for Surebet convenience properties."""
+
+    def test_sharp_odds(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """sharp_odds should return prong_sharp odds."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.sharp_odds.value == 2.10
+
+    def test_soft_odds(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """soft_odds should return prong_soft odds."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.soft_odds.value == 2.05
+
+    def test_sharp_bookmaker(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """sharp_bookmaker should return prong_sharp bookmaker."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.sharp_bookmaker == "pinnaclesports"
+
+    def test_soft_bookmaker(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """soft_bookmaker should return prong_soft bookmaker."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.soft_bookmaker == "retabet_apuestas"
+
+    def test_teams_from_soft_prong(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """teams should return prong_soft teams."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.teams == ("Team A", "Team B")
+
+    def test_event_time_from_soft_prong(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """event_time should return prong_soft event_time."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.event_time == soft_pick.event_time
+
+    def test_tournament_from_soft_prong(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """tournament should return prong_soft tournament."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.tournament == "Premier League"
+
+    def test_sport_id_from_soft_prong(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """sport_id should return prong_soft sport_id."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.sport_id == "Football"
+
+    def test_is_profitable_true(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """is_profitable should be True when profit > 0."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+        )
+        assert surebet.is_profitable is True
+
+    def test_is_profitable_false_zero(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """is_profitable should be False when profit == 0."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(0.0),
+        )
+        assert surebet.is_profitable is False
+
+    def test_is_profitable_false_negative(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """is_profitable should be False when profit < 0."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(-0.5),
+        )
+        assert surebet.is_profitable is False
+
+    def test_is_acceptable_delegates_to_profit(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """is_acceptable should delegate to Profit.is_acceptable()."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),  # Within acceptable range
+        )
+        assert surebet.is_acceptable is True
+
+    def test_redis_key_from_soft_prong(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """redis_key should delegate to prong_soft."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.redis_key == soft_pick.redis_key
+
+    def test_get_opposite_keys_from_soft_prong(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """get_opposite_keys should delegate to prong_soft."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        assert surebet.get_opposite_keys() == soft_pick.get_opposite_keys()
+
+
+class TestSurebetImmutability:
+    """Tests for Surebet immutability (frozen dataclass)."""
+
+    def test_cannot_modify_prong_sharp(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """Should not be able to modify prong_sharp."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        new_pick = Pick(
+            teams=("X", "Y"),
+            odds=Odds(3.0),
+            market_type=MarketType.WIN2,
+            variety="",
+            event_time=datetime.now(timezone.utc),
+            bookmaker="pinnaclesports",
+        )
+        with pytest.raises(FrozenInstanceError):
+            surebet.prong_sharp = new_pick  # type: ignore[misc]
+
+    def test_cannot_modify_prong_soft(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """Should not be able to modify prong_soft."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        with pytest.raises(FrozenInstanceError):
+            surebet.prong_soft = soft_pick  # type: ignore[misc]
+
+    def test_cannot_modify_profit(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """Should not be able to modify profit."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.0),
+        )
+        with pytest.raises(FrozenInstanceError):
+            surebet.profit = Profit(5.0)  # type: ignore[misc]
+
+
+class TestSurebetStringRepresentations:
+    """Tests for __str__ and __repr__."""
+
+    def test_str_representation(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """__str__ should provide readable format."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+        )
+        result = str(surebet)
+        assert "Team A" in result
+        assert "Team B" in result
+        assert "pinnaclesports" in result
+        assert "retabet_apuestas" in result
+        assert "2.5" in result or "2.50" in result
+
+    def test_repr_representation(self, sharp_pick: Pick, soft_pick: Pick) -> None:
+        """__repr__ should include all fields."""
+        surebet = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+        )
+        result = repr(surebet)
+        assert "Surebet(" in result
+        assert "prong_sharp=" in result
+        assert "prong_soft=" in result
+        assert "profit=" in result
+
+
+class TestSurebetEquality:
+    """Tests for Surebet equality (dataclass default)."""
+
+    def test_same_surebets_are_equal(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """Two surebets with same values should be equal."""
+        surebet1 = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+        )
+        surebet2 = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+        )
+        assert surebet1 == surebet2
+
+    def test_different_profit_not_equal(
+        self, sharp_pick: Pick, soft_pick: Pick
+    ) -> None:
+        """Surebets with different profit should not be equal."""
+        surebet1 = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(2.5),
+        )
+        surebet2 = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick,
+            profit=Profit(3.0),
+        )
+        assert surebet1 != surebet2
+
+    def test_different_prongs_not_equal(self, sharp_pick: Pick) -> None:
+        """Surebets with different prongs should not be equal."""
+        soft_pick1 = Pick(
+            teams=("A", "B"),
+            odds=Odds(2.0),
+            market_type=MarketType.WIN1,
+            variety="",
+            event_time=datetime.now(timezone.utc),
+            bookmaker="retabet_apuestas",
+        )
+        soft_pick2 = Pick(
+            teams=("C", "D"),  # Different teams
+            odds=Odds(2.0),
+            market_type=MarketType.WIN1,
+            variety="",
+            event_time=datetime.now(timezone.utc),
+            bookmaker="retabet_apuestas",
+        )
+        surebet1 = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick1,
+            profit=Profit(2.5),
+        )
+        surebet2 = Surebet(
+            prong_sharp=sharp_pick,
+            prong_soft=soft_pick2,
+            profit=Profit(2.5),
+        )
+        assert surebet1 != surebet2
