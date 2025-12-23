@@ -188,11 +188,11 @@ Implementar el cálculo de stake y cuota mínima de forma extensible.
 ```
 
 ### Checklist Fase 2
-- [ ] 2.1 BaseCalculator
-- [ ] 2.2 PinnacleCalculator
-- [ ] 2.3 CalculatorFactory
-- [ ] 2.4 CalculationService
-- [ ] 2.5 Tests completos
+- [x] 2.1 BaseCalculator (DI + validación min < max)
+- [x] 2.2 PinnacleCalculator (fórmula ADR-003 + validación odds > 1)
+- [x] 2.3 CalculatorFactory (inyecta límites a calculators)
+- [x] 2.4 CalculationService (orquesta calculators)
+- [x] 2.5 Tests completos (46 tests)
 
 ---
 
@@ -510,7 +510,7 @@ async def main():
 ```
 Fase 0:  Setup          [████] 100%
 Fase 1:  Domain Core    [████] 100%  (9/9: Excepciones + Odds + Profit + MarketType + Tests VOs + Bookmaker + Pick + Surebet + Tests Entities)
-Fase 2:  Calculators    [____] 0%
+Fase 2:  Calculators    [████] 100%  (5/5: BaseCalculator + PinnacleCalculator + Factory + CalculationService + Tests)
 Fase 3:  Validators     [____] 0%
 Fase 4:  Config         [____] 0%
 Fase 5A: Redis          [____] 0%
@@ -519,7 +519,7 @@ Fase 5C: Messaging      [____] 0%
 Fase 6:  Application    [____] 0%
 Fase 7:  Integración    [____] 0%
 
-Total: 16/56 tareas completadas
+Total: 21/56 tareas completadas
 ```
 
 ---
