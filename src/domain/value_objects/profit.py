@@ -1,10 +1,10 @@
 """Profit value object representing surebet profit percentage.
 
-Implementation Requirements:
+Design Decisions:
 - Immutable dataclass (frozen=True)
-- Validation: -100 <= profit <= 100
-- Method: is_acceptable() -> bool (checks if within trading range)
-- Trading range: -1% to 25% (from docs/01-SRS.md RF-003)
+- Only validates MATHEMATICAL limits (-100% to 100%)
+- BUSINESS limits (e.g., -1% to 25%) are NOT hardcoded here
+- Business limits should come from Settings/.env for configurability
 
 Reference:
 - docs/04-Structure.md: "value_objects/"
@@ -18,6 +18,11 @@ from dataclasses import dataclass
 
 from src.shared.exceptions import InvalidProfitError
 
+# Default trading limits (can be overridden via Settings/.env)
+# These are only used as DEFAULTS, not hardcoded limits
+DEFAULT_MIN_ACCEPTABLE: float = -1.0
+DEFAULT_MAX_ACCEPTABLE: float = 25.0
+
 
 @dataclass(frozen=True)
 class Profit:
@@ -28,16 +33,18 @@ class Profit:
     Attributes:
         value: The profit percentage value.
 
-    Note:
+    Design Note:
         ABSOLUTE_MIN/MAX are mathematical validity limits, NOT business rules.
-        Business rules (e.g., only accept picks with profit -1% to 25%) are
-        checked via is_acceptable() using MIN_ACCEPTABLE/MAX_ACCEPTABLE.
+        Business rules (e.g., only accept picks with profit -1% to 25%) should
+        be passed as parameters to is_acceptable() from Settings/.env.
 
     Examples:
         >>> profit = Profit(2.5)
         >>> profit.value
         2.5
-        >>> profit.is_acceptable()
+        >>> profit.is_acceptable()  # Uses defaults
+        True
+        >>> profit.is_acceptable(min_profit=-0.5, max_profit=10.0)  # Custom limits
         True
         >>> profit.as_decimal
         0.025
@@ -47,13 +54,9 @@ class Profit:
 
     # Mathematical validity limits (NOT business rules)
     # These define what is mathematically valid as profit percentage
-    ABSOLUTE_MIN: float = -100.0  # Cannot lose more than 100%
-    ABSOLUTE_MAX: float = 100.0   # Cannot gain more than 100% in surebet
-
-    # Trading limits (from SRS RF-003)
-    # These are business rules for acceptable trading range
-    MIN_ACCEPTABLE: float = -1.0
-    MAX_ACCEPTABLE: float = 25.0
+    # A profit cannot be less than -100% (total loss) or more than +100%
+    ABSOLUTE_MIN: float = -100.0
+    ABSOLUTE_MAX: float = 100.0
 
     def __post_init__(self) -> None:
         """Validate profit is within mathematically valid range."""
@@ -71,19 +74,35 @@ class Profit:
         """Format profit as percentage with 2 decimal places."""
         return f"{self.value:.2f}%"
 
-    def is_acceptable(self) -> bool:
+    def is_acceptable(
+        self,
+        min_profit: float = DEFAULT_MIN_ACCEPTABLE,
+        max_profit: float = DEFAULT_MAX_ACCEPTABLE,
+    ) -> bool:
         """Check if profit is within acceptable trading range.
 
-        This method is used by ProfitValidator to check against business rules.
-        A profit outside this range is mathematically valid but not suitable
-        for trading.
+        The limits should be passed in from Settings/.env for configurability.
+        Default values are provided only for backwards compatibility.
+
+        Args:
+            min_profit: Minimum acceptable profit % (default: -1.0, from .env)
+            max_profit: Maximum acceptable profit % (default: 25.0, from .env)
 
         Returns:
-            True if MIN_ACCEPTABLE <= value <= MAX_ACCEPTABLE.
+            True if min_profit <= value <= max_profit.
+
+        Example:
+            >>> profit = Profit(2.5)
+            >>> # With defaults from .env
+            >>> profit.is_acceptable()
+            True
+            >>> # With custom limits (e.g., for different subscription tier)
+            >>> profit.is_acceptable(min_profit=0.0, max_profit=10.0)
+            True
 
         Reference: RF-003 in docs/01-SRS.md
         """
-        return self.MIN_ACCEPTABLE <= self.value <= self.MAX_ACCEPTABLE
+        return min_profit <= self.value <= max_profit
 
     @property
     def as_decimal(self) -> float:
