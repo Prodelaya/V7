@@ -141,8 +141,8 @@ Implementar los tipos de datos fundamentales con validación automática.
 - [x] 1.5 Tests VOs
 - [x] 1.6 Bookmaker entity
 - [x] 1.7 Pick entity
-- [ ] 1.8 Surebet entity
-- [ ] 1.9 Tests entidades
+- [x] 1.8 Surebet entity
+- [x] 1.9 Tests entidades
 
 ---
 
@@ -509,7 +509,7 @@ async def main():
 
 ```
 Fase 0:  Setup          [████] 100%
-Fase 1:  Domain Core    [███▓] 87%  (7/8: Excepciones + Odds + Profit + MarketType + Tests VOs + Bookmaker + Pick)
+Fase 1:  Domain Core    [████] 100%  (9/9: Excepciones + Odds + Profit + MarketType + Tests VOs + Bookmaker + Pick + Surebet + Tests Entities)
 Fase 2:  Calculators    [____] 0%
 Fase 3:  Validators     [____] 0%
 Fase 4:  Config         [____] 0%
@@ -519,7 +519,7 @@ Fase 5C: Messaging      [____] 0%
 Fase 6:  Application    [____] 0%
 Fase 7:  Integración    [____] 0%
 
-Total: 14/56 tareas completadas
+Total: 16/56 tareas completadas
 ```
 
 ---
