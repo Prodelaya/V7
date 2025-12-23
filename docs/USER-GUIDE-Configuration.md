@@ -160,6 +160,36 @@ MAX_PROFIT=25.0
 
 ---
 
+### Rangos de Stake (Emojis) - Configuración Avanzada
+
+**¿Qué es?**  
+Los rangos que determinan qué emoji (🔴🟠🟡🟢) se muestra según el porcentaje de ganancia.
+
+**Configuración actual (Pinnacle)**:
+
+| Ganancia     | Emoji | Confianza  |
+| ------------ | ----- | ---------- |
+| -1% a -0.5%  | 🔴     | Baja       |
+| -0.5% a 1.5% | 🟠     | Media-baja |
+| 1.5% a 4%    | 🟡     | Media-alta |
+| > 4%         | 🟢     | Alta       |
+
+**¿Dónde se cambia?**  
+> ⚠️ Esto requiere modificar código. Edita el archivo:  
+> `src/domain/services/calculators/pinnacle.py`  
+> Busca la constante `STAKE_RANGES` (aproximadamente línea 60).
+
+**Ejemplo de cambio**:
+```python
+# Cambiar el límite de 🟢 de 4% a 5%:
+STAKE_RANGES = (
+    (-1.0, -0.5, "🔴", 0.25, (0.5, 1.0, 1.5)),
+    (-0.5, 1.5, "🟠", 0.50, (1.0, 1.5, 2.0)),
+    (1.5, 5.0, "🟡", 0.75, (1.5, 2.0, 3.0)),  # Cambiado de 4.0 a 5.0
+    (5.0, 100.0, "🟢", 1.00, (2.0, 3.0, 4.0)),
+)
+```
+
 ## 🤖 Configuración de Telegram
 
 ### Token del Bot (TELEGRAM_BOT_TOKEN)
