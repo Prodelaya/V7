@@ -16,7 +16,7 @@ Reference:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
 
 # Default profit limits (can be overridden via Settings/.env)
 DEFAULT_MIN_PROFIT: float = -1.0
@@ -30,15 +30,11 @@ class StakeResult:
 
     Attributes:
         emoji: Stake indicator emoji (🔴, 🟠, 🟡, 🟢)
-        confidence: Confidence level (0.0 - 1.0)
-        units_suggestion: Tuple of (min, recommended, max) units
 
     Reference: RF-005 in docs/01-SRS.md
     """
 
     emoji: str
-    confidence: float
-    units_suggestion: Tuple[float, float, float]
 
 
 @dataclass(frozen=True, slots=True)

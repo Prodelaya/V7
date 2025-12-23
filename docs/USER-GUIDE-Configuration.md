@@ -183,10 +183,10 @@ Los rangos que determinan qué emoji (🔴🟠🟡🟢) se muestra según el por
 ```python
 # Cambiar el límite de 🟢 de 4% a 5%:
 STAKE_RANGES = (
-    (-1.0, -0.5, "🔴", 0.25, (0.5, 1.0, 1.5)),
-    (-0.5, 1.5, "🟠", 0.50, (1.0, 1.5, 2.0)),
-    (1.5, 5.0, "🟡", 0.75, (1.5, 2.0, 3.0)),  # Cambiado de 4.0 a 5.0
-    (5.0, 100.0, "🟢", 1.00, (2.0, 3.0, 4.0)),
+    (-1.0, -0.5, "🔴"),    # Low profit
+    (-0.5, 1.5, "🟠"),     # Medium-low profit
+    (1.5, 5.0, "🟡"),      # Medium-high profit (cambiado de 4.0 a 5.0)
+    (5.0, 100.0, "🟢"),    # High profit
 )
 ```
 

@@ -20,7 +20,7 @@ class CalculationService:
     Domain service for pick calculations.
 
     Orchestrates the calculator strategy pattern to compute:
-    - Stake recommendation (emoji + confidence)
+    - Stake recommendation (emoji indicator)
     - Minimum acceptable odds in soft bookmaker
 
     Example:
@@ -49,14 +49,14 @@ class CalculationService:
         sharp_bookmaker: str,
     ) -> Optional[StakeResult]:
         """
-        Calculate recommended stake based on profit and sharp bookmaker.
+        Calculate stake indicator based on profit and sharp bookmaker.
 
         Args:
             profit: Surebet profit percentage
             sharp_bookmaker: Name of the sharp bookmaker
 
         Returns:
-            StakeResult with emoji and confidence, or None if rejected
+            StakeResult with emoji, or None if rejected
 
         Reference: RF-005 in docs/01-SRS.md
         """

@@ -36,32 +36,28 @@ class TestPinnacleCalculator:
     # ═══════════════════════════════════════════════════════════════════════════
 
     def test_calculate_stake_low_profit_returns_red_emoji(self):
-        """Profit -0.8% should return 🔴 (low confidence)."""
+        """Profit -0.8% should return 🔴."""
         result = self.calculator.calculate_stake(-0.8)
         assert result is not None
         assert result.emoji == "🔴"
-        assert result.confidence == 0.25
 
     def test_calculate_stake_medium_low_profit_returns_orange_emoji(self):
-        """Profit 0.5% should return 🟠 (medium-low confidence)."""
+        """Profit 0.5% should return 🟠."""
         result = self.calculator.calculate_stake(0.5)
         assert result is not None
         assert result.emoji == "🟠"
-        assert result.confidence == 0.50
 
     def test_calculate_stake_medium_high_profit_returns_yellow_emoji(self):
-        """Profit 2.5% should return 🟡 (medium-high confidence)."""
+        """Profit 2.5% should return 🟡."""
         result = self.calculator.calculate_stake(2.5)
         assert result is not None
         assert result.emoji == "🟡"
-        assert result.confidence == 0.75
 
     def test_calculate_stake_high_profit_returns_green_emoji(self):
-        """Profit 5% should return 🟢 (high confidence)."""
+        """Profit 5% should return 🟢."""
         result = self.calculator.calculate_stake(5.0)
         assert result is not None
         assert result.emoji == "🟢"
-        assert result.confidence == 1.00
 
     def test_calculate_stake_below_minimum_returns_none(self):
         """Profit -2% (below -1%) should return None."""
@@ -86,20 +82,10 @@ class TestPinnacleCalculator:
         assert result.emoji == "🟢"
 
     def test_calculate_stake_returns_stake_result(self):
-        """Result should be a StakeResult dataclass."""
+        """Result should be a StakeResult dataclass with only emoji."""
         result = self.calculator.calculate_stake(2.0)
         assert isinstance(result, StakeResult)
         assert hasattr(result, "emoji")
-        assert hasattr(result, "confidence")
-        assert hasattr(result, "units_suggestion")
-
-    def test_calculate_stake_units_suggestion_is_tuple(self):
-        """Units suggestion should be a tuple of 3 floats."""
-        result = self.calculator.calculate_stake(2.0)
-        assert result is not None
-        assert isinstance(result.units_suggestion, tuple)
-        assert len(result.units_suggestion) == 3
-        assert all(isinstance(u, float) for u in result.units_suggestion)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # MIN ODDS CALCULATION TESTS (ADR-003, Appendix 6.2)
@@ -263,13 +249,13 @@ class TestStakeResultDataclass:
 
     def test_stake_result_is_frozen(self):
         """StakeResult should be immutable."""
-        result = StakeResult("🟡", 0.75, (1.5, 2.0, 3.0))
+        result = StakeResult("🟡")
         with pytest.raises(AttributeError):
             result.emoji = "🔴"  # type: ignore
 
     def test_stake_result_has_slots(self):
         """StakeResult should use __slots__ for memory efficiency."""
-        result = StakeResult("🟡", 0.75, (1.5, 2.0, 3.0))
+        result = StakeResult("🟡")
         with pytest.raises(AttributeError):
             result.__dict__  # noqa: B018
 

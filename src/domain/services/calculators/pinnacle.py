@@ -15,7 +15,7 @@ Reference:
 - docs/01-SRS.md: RF-005, RF-006, Appendix 6.2
 """
 
-from typing import Optional, Tuple
+from typing import Optional
 
 from .base import BaseCalculator, MinOddsResult, StakeResult
 
@@ -54,16 +54,13 @@ class PinnacleCalculator(BaseCalculator):
     # Profit threshold for min_odds calculation (as decimal, -1%)
     PROFIT_THRESHOLD: float = -0.01
 
-    # Stake ranges: (min_profit, max_profit, emoji, confidence, units)
-    # Note: These are RELATIVE thresholds, not absolute limits
-    # The absolute limits come from the injected min_profit/max_profit
-    STAKE_RANGES: Tuple[
-        Tuple[float, float, str, float, Tuple[float, float, float]], ...
-    ] = (
-        (-1.0, -0.5, "🔴", 0.25, (0.5, 1.0, 1.5)),
-        (-0.5, 1.5, "🟠", 0.50, (1.0, 1.5, 2.0)),
-        (1.5, 4.0, "🟡", 0.75, (1.5, 2.0, 3.0)),
-        (4.0, 100.0, "🟢", 1.00, (2.0, 3.0, 4.0)),  # 100 as upper bound for last range
+    # Stake ranges: (min_profit, max_profit, emoji)
+    # Simple mapping from profit range to visual indicator
+    STAKE_RANGES = (
+        (-1.0, -0.5, "🔴"),  # Low profit - caution
+        (-0.5, 1.5, "🟠"),  # Medium-low profit
+        (1.5, 4.0, "🟡"),  # Medium-high profit
+        (4.0, 100.0, "🟢"),  # High profit
     )
 
     def __init__(
@@ -87,13 +84,13 @@ class PinnacleCalculator(BaseCalculator):
 
     def calculate_stake(self, profit: float) -> Optional[StakeResult]:
         """
-        Calculate recommended stake based on surebet profit.
+        Calculate stake indicator emoji based on surebet profit.
 
         Args:
             profit: Surebet profit percentage (e.g., 2.5 means 2.5%)
 
         Returns:
-            StakeResult with emoji and units, or None if out of range
+            StakeResult with emoji, or None if out of range
 
         Example:
             >>> calc = PinnacleCalculator()
@@ -106,22 +103,14 @@ class PinnacleCalculator(BaseCalculator):
             return None
 
         # Find matching stake range
-        for range_min, range_max, emoji, confidence, units in self.STAKE_RANGES:
+        for range_min, range_max, emoji in self.STAKE_RANGES:
             if range_min <= profit < range_max:
-                return StakeResult(
-                    emoji=emoji,
-                    confidence=confidence,
-                    units_suggestion=units,
-                )
+                return StakeResult(emoji=emoji)
 
         # Edge case: exactly at range_max of last range
         if profit >= self.STAKE_RANGES[-1][0]:
-            _, _, emoji, confidence, units = self.STAKE_RANGES[-1]
-            return StakeResult(
-                emoji=emoji,
-                confidence=confidence,
-                units_suggestion=units,
-            )
+            emoji = self.STAKE_RANGES[-1][2]
+            return StakeResult(emoji=emoji)
 
         return None
 
