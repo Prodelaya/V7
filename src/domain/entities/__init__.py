@@ -8,8 +8,8 @@ Contains:
 Reference: docs/04-Structure.md, docs/05-Implementation.md (Phase 1)
 """
 
+from .bookmaker import Bookmaker, BookmakerType
 from .pick import Pick
 from .surebet import Surebet
-from .bookmaker import Bookmaker
 
-__all__ = ["Pick", "Surebet", "Bookmaker"]
+__all__ = ["Pick", "Surebet", "Bookmaker", "BookmakerType"]

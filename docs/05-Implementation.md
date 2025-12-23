@@ -138,8 +138,8 @@ Implementar los tipos de datos fundamentales con validación automática.
 - [x] 1.2 Odds VO
 - [x] 1.3 Profit VO
 - [x] 1.4 MarketType enum + OPPOSITE_MARKETS
-- [ ] 1.5 Tests VOs
-- [ ] 1.6 Bookmaker entity
+- [x] 1.5 Tests VOs
+- [x] 1.6 Bookmaker entity
 - [ ] 1.7 Pick entity
 - [ ] 1.8 Surebet entity
 - [ ] 1.9 Tests entidades
@@ -509,7 +509,7 @@ async def main():
 
 ```
 Fase 0:  Setup          [████] 100%
-Fase 1:  Domain Core    [██__] 50%  (4/8: Excepciones + Odds + Profit + MarketType)
+Fase 1:  Domain Core    [████] 75%  (6/8: Excepciones + Odds + Profit + MarketType + Tests VOs + Bookmaker)
 Fase 2:  Calculators    [____] 0%
 Fase 3:  Validators     [____] 0%
 Fase 4:  Config         [____] 0%
