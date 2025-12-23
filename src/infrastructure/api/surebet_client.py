@@ -42,6 +42,9 @@ class SurebetClient:
     - limit: 5000
     - cursor: {sort_by}:{id} of last pick
     
+    TODO(Fase 4): El parámetro 'bookmakers' se inyectará desde Settings.API_BOOKMAKERS
+    que se carga del archivo .env. Ver: docs/09-Bookmakers-Configuration.md
+    
     TODO: Implement based on:
     - Task 5.5 in docs/05-Implementation.md
     - ADR-009 in docs/03-ADRs.md
