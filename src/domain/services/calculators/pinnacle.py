@@ -1,35 +1,34 @@
 """Pinnacle-specific calculator implementation.
 
-Implementation Requirements:
-- Implement BaseCalculator for Pinnacle Sports
-- Use CORRECT min_odds formula: 1 / (1.01 - 1/sharp_odds)
-- Stake ranges from docs/01-SRS.md RF-005
+Implements BaseCalculator for Pinnacle Sports as the sharp bookmaker reference.
+Uses the CORRECT min_odds formula from ADR-003.
+
+Design Decisions:
+- Profit limits are inherited from BaseCalculator (injected via .env)
+- Stake ranges are based on relative positions within the profit range
+- Min odds formula uses exact -1% profit threshold
 
 Reference:
 - docs/02-PDR.md: Section 4.1 (Strategy Pattern)
 - docs/05-Implementation.md: Task 2.2
 - docs/03-ADRs.md: ADR-003 (CORRECT formula)
 - docs/01-SRS.md: RF-005, RF-006, Appendix 6.2
-
-⚠️ CRITICAL: The legacy V6 formula was WRONG! See ADR-003.
-
-TODO: Implement PinnacleCalculator
 """
 
-from typing import Optional
+from typing import Optional, Tuple
 
-from .base import BaseCalculator, StakeResult, MinOddsResult
+from .base import BaseCalculator, MinOddsResult, StakeResult
 
 
 class PinnacleCalculator(BaseCalculator):
     """
     Calculator strategy for Pinnacle Sports as sharp bookmaker.
-    
+
     Pinnacle is considered the market reference due to:
     - Low margins (~2-3%)
     - Winners accepted policy
     - Efficient odds that reflect true probabilities
-    
+
     Stake ranges (from docs/01-SRS.md RF-005):
         | Profit       | Emoji | Confidence |
         |--------------|-------|------------|
@@ -37,10 +36,10 @@ class PinnacleCalculator(BaseCalculator):
         | -0.5% to 1.5%| 🟠    | Medium-low |
         | 1.5% to 4%   | 🟡    | Medium-high|
         | >4%          | 🟢    | High       |
-    
+
     Min odds formula (from docs/03-ADRs.md ADR-003):
         min_odds = 1 / (1.01 - 1/sharp_odds)
-    
+
     Reference table (from docs/01-SRS.md Appendix 6.2):
         | Sharp Odds | Min Soft Odds |
         |------------|---------------|
@@ -50,83 +49,117 @@ class PinnacleCalculator(BaseCalculator):
         | 2.05       | 1.92          |
         | 2.50       | 1.64          |
         | 3.00       | 1.48          |
-    
-    TODO: Implement based on:
-    - Task 2.2 in docs/05-Implementation.md
-    - ADR-003 in docs/03-ADRs.md
-    - get_stake() in legacy/RetadorV6.py (line 1267) - Pinnacle branch ONLY
     """
-    
-    # Profit ranges: (min_profit, max_profit, emoji, confidence, units)
-    # Reference: docs/01-SRS.md RF-005
-    PROFIT_RANGES = [
+
+    # Profit threshold for min_odds calculation (as decimal, -1%)
+    PROFIT_THRESHOLD: float = -0.01
+
+    # Stake ranges: (min_profit, max_profit, emoji, confidence, units)
+    # Note: These are RELATIVE thresholds, not absolute limits
+    # The absolute limits come from the injected min_profit/max_profit
+    STAKE_RANGES: Tuple[
+        Tuple[float, float, str, float, Tuple[float, float, float]], ...
+    ] = (
         (-1.0, -0.5, "🔴", 0.25, (0.5, 1.0, 1.5)),
-        (-0.5,  1.5, "🟠", 0.50, (1.0, 1.5, 2.0)),
-        ( 1.5,  4.0, "🟡", 0.75, (1.5, 2.0, 3.0)),
-        ( 4.0, 25.0, "🟢", 1.00, (2.0, 3.0, 4.0)),
-    ]
-    
-    # Profit limits
-    MIN_PROFIT = -1.0   # Minimum acceptable (%)
-    MAX_PROFIT = 25.0   # Maximum acceptable (%)
-    
-    # Profit threshold for min_odds calculation (as decimal)
-    PROFIT_THRESHOLD = -0.01  # -1%
-    
+        (-0.5, 1.5, "🟠", 0.50, (1.0, 1.5, 2.0)),
+        (1.5, 4.0, "🟡", 0.75, (1.5, 2.0, 3.0)),
+        (4.0, 100.0, "🟢", 1.00, (2.0, 3.0, 4.0)),  # 100 as upper bound for last range
+    )
+
+    def __init__(
+        self,
+        min_profit: float = -1.0,
+        max_profit: float = 25.0,
+    ) -> None:
+        """
+        Initialize PinnacleCalculator with configurable profit limits.
+
+        Args:
+            min_profit: Minimum acceptable profit % (default: -1.0, from .env)
+            max_profit: Maximum acceptable profit % (default: 25.0, from .env)
+        """
+        super().__init__(min_profit=min_profit, max_profit=max_profit)
+
     @property
     def name(self) -> str:
         """Identifier for Pinnacle."""
         return "pinnaclesports"
-    
+
     def calculate_stake(self, profit: float) -> Optional[StakeResult]:
         """
         Calculate recommended stake based on surebet profit.
-        
+
         Args:
             profit: Surebet profit percentage (e.g., 2.5 means 2.5%)
-            
+
         Returns:
             StakeResult with emoji and units, or None if out of range
-        
+
         Example:
             >>> calc = PinnacleCalculator()
             >>> result = calc.calculate_stake(2.5)
             >>> result.emoji
             '🟡'
         """
-        raise NotImplementedError("PinnacleCalculator.calculate_stake not implemented")
-    
+        # Check if profit is within acceptable range (uses injected limits)
+        if not self.is_valid_profit(profit):
+            return None
+
+        # Find matching stake range
+        for range_min, range_max, emoji, confidence, units in self.STAKE_RANGES:
+            if range_min <= profit < range_max:
+                return StakeResult(
+                    emoji=emoji,
+                    confidence=confidence,
+                    units_suggestion=units,
+                )
+
+        # Edge case: exactly at range_max of last range
+        if profit >= self.STAKE_RANGES[-1][0]:
+            _, _, emoji, confidence, units = self.STAKE_RANGES[-1]
+            return StakeResult(
+                emoji=emoji,
+                confidence=confidence,
+                units_suggestion=units,
+            )
+
+        return None
+
     def calculate_min_odds(self, sharp_odds: float) -> MinOddsResult:
         """
         Calculate minimum acceptable odds in soft bookmaker.
-        
-        ⚠️ USE CORRECT FORMULA from ADR-003:
+
+        ⚠️ USES CORRECT FORMULA from ADR-003:
             min_odds = 1 / (1.01 - 1/sharp_odds)
-        
+
         ❌ DO NOT use legacy V6 formula (it was WRONG!)
-        
+
         Args:
-            sharp_odds: Odds of OPPOSITE market in Pinnacle
-            
+            sharp_odds: Odds of OPPOSITE market in Pinnacle (must be > 1.0)
+
         Returns:
             MinOddsResult with minimum odds
-        
+
+        Raises:
+            ValueError: If sharp_odds <= 1.0
+
         Example:
             >>> calc = PinnacleCalculator()
             >>> result = calc.calculate_min_odds(2.05)
-            >>> result.min_odds
+            >>> round(result.min_odds, 2)
             1.92
         """
-        raise NotImplementedError("PinnacleCalculator.calculate_min_odds not implemented")
-    
-    def is_valid_profit(self, profit: float) -> bool:
-        """
-        Check if profit is within acceptable range.
-        
-        Args:
-            profit: Surebet profit percentage
-            
-        Returns:
-            True if -1% <= profit <= 25%
-        """
-        raise NotImplementedError("PinnacleCalculator.is_valid_profit not implemented")
+        # Validate input to prevent mathematical errors
+        if sharp_odds <= 1.0:
+            raise ValueError(f"sharp_odds must be > 1.0, got {sharp_odds}")
+
+        # CORRECT formula from ADR-003
+        # min_odds = 1 / (1.01 - 1/sharp_odds)
+        # Where 1.01 represents accepting up to -1% profit (1 + 0.01)
+        implied_prob_sharp = 1 / sharp_odds
+        min_odds = 1 / (1.01 - implied_prob_sharp)
+
+        return MinOddsResult(
+            min_odds=round(min_odds, 2),
+            profit_threshold=self.PROFIT_THRESHOLD,
+        )
