@@ -497,6 +497,74 @@ WEB_BASE_URL=https://retador.es
 
 ---
 
+## 📦 Channel Cache para Envío de Picks
+
+> [!IMPORTANT]
+> Cuando el sistema tenga muchos clientes (100+), **NO consultar la BD en cada pick**. Usar un cache en memoria con invalidación.
+
+### Problema
+
+Si se consulta `ChannelRepository.get_active_channels()` en cada pick, con 1000 clientes significa ~100ms de latencia adicional por pick. Inaceptable.
+
+### Solución: Cache con Invalidación
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FLUJO OPTIMIZADO                         │
+├─────────────────────────────────────────────────────────────┤
+│  1. ARRANQUE    → Cargar canales a memoria (1 consulta)     │
+│  2. PICK LLEGA  → Consultar cache en memoria (~0ms)         │
+│  3. CONTRATACIÓN → Invalidar cache → Refrescar              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Implementación Requerida
+
+```python
+class ChannelCache:
+    def __init__(self, repository: ChannelRepository):
+        self._repository = repository
+        self._channels: Dict[str, List[int]] = {}  # bookmaker -> [channel_ids]
+    
+    async def refresh(self):
+        """Carga todos los canales activos de la DB a memoria."""
+        all_channels = await self._repository.get_all_active()
+        self._channels = self._group_by_bookmaker(all_channels)
+    
+    def get_channels(self, bookmaker: str) -> List[int]:
+        """Consulta instantánea desde memoria."""
+        return self._channels.get(bookmaker, [])
+    
+    async def invalidate(self):
+        """Llamar cuando se crea/elimina un canal."""
+        await self.refresh()
+```
+
+### Estrategias de Invalidación
+
+| Estrategia       | Cuándo Refrescar        | Uso        |
+| ---------------- | ----------------------- | ---------- |
+| **Event-driven** | Al crear/eliminar canal | Principal  |
+| **Time-based**   | Cada 5-10 min           | Safety net |
+
+### Integración con ChannelProvisioner
+
+```python
+# channel_provisioner.py
+async def provision_channel(self, subscription):
+    channel = await self._create_telegram_channel(...)
+    await self._repository.save(channel)
+    
+    # ⚡ Notifica al cache
+    await self._channel_cache.invalidate()
+```
+
+### Nota para Implementación
+
+El `channel_mapping` estático en `BookmakerConfig` será reemplazado por este cache dinámico cuando se implementen las suscripciones.
+
+---
+
 ## 📚 Referencias
 
 - [ADR-016: Sistema de Suscripciones Automatizado](./ADRs/ADR-016-Subscriptions.md)
