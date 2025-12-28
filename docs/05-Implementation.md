@@ -226,7 +226,7 @@ Implementar validación modular y ordenada.
 ```
 
 ### Checklist Fase 3
-- [ ] 3.1 BaseValidator
+- [x] 3.1 BaseValidator (Pick entity + ValidationResult)
 - [ ] 3.2 OddsValidator
 - [ ] 3.3 ProfitValidator
 - [ ] 3.4 TimeValidator
@@ -511,7 +511,7 @@ async def main():
 Fase 0:  Setup          [████] 100%
 Fase 1:  Domain Core    [████] 100%  (9/9: Excepciones + Odds + Profit + MarketType + Tests VOs + Bookmaker + Pick + Surebet + Tests Entities)
 Fase 2:  Calculators    [████] 100%  (5/5: BaseCalculator + PinnacleCalculator + Factory + CalculationService + Tests)
-Fase 3:  Validators     [____] 0%
+Fase 3:  Validators     [█___] 17%   (1/6: BaseValidator)
 Fase 4:  Config         [____] 0%
 Fase 5A: Redis          [____] 0%
 Fase 5B: API Client     [____] 0%
@@ -519,7 +519,7 @@ Fase 5C: Messaging      [____] 0%
 Fase 6:  Application    [____] 0%
 Fase 7:  Integración    [____] 0%
 
-Total: 21/56 tareas completadas
+Total: 22/56 tareas completadas
 ```
 
 ---
