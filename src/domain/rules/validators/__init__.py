@@ -10,7 +10,7 @@ Contains:
 Reference: docs/05-Implementation.md Phase 3, ADR-015
 """
 
-from .base import BaseValidator
+from .base import BaseValidator, ValidationResult
 from .odds_validator import OddsValidator
 from .profit_validator import ProfitValidator
 from .time_validator import TimeValidator
@@ -18,6 +18,7 @@ from .duplicate_validator import DuplicateValidator
 
 __all__ = [
     "BaseValidator",
+    "ValidationResult",
     "OddsValidator",
     "ProfitValidator",
     "TimeValidator",
