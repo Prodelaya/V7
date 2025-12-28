@@ -1,6 +1,8 @@
 """Tests for validation chain and validators.
 
 Test Requirements:
+- BaseValidator is abstract (cannot instantiate)
+- Subclasses must implement name and validate
 - ValidationChain fail-fast behavior
 - OddsValidator range checking
 - ProfitValidator range checking
@@ -9,11 +11,58 @@ Test Requirements:
 Reference:
 - docs/05-Implementation.md: Task 3.6
 - docs/03-ADRs.md: ADR-005 (validator order)
-
-TODO: Implement validator tests
 """
 
 import pytest
+
+from src.domain.rules.validators.base import BaseValidator, ValidationResult
+
+
+class TestBaseValidator:
+    """Tests for BaseValidator abstract interface (Task 3.1)."""
+    
+    def test_base_validator_is_abstract(self):
+        """BaseValidator should not be instantiable directly."""
+        with pytest.raises(TypeError, match="abstract"):
+            BaseValidator()
+    
+    def test_validation_result_creation(self):
+        """ValidationResult should be creatable with is_valid."""
+        result = ValidationResult(is_valid=True)
+        assert result.is_valid is True
+        assert result.error_message is None
+    
+    def test_validation_result_with_error(self):
+        """ValidationResult should store error message."""
+        result = ValidationResult(is_valid=False, error_message="Test error")
+        assert result.is_valid is False
+        assert result.error_message == "Test error"
+    
+    def test_validation_result_is_immutable(self):
+        """ValidationResult should be frozen (immutable)."""
+        result = ValidationResult(is_valid=True)
+        with pytest.raises(Exception):  # FrozenInstanceError
+            result.is_valid = False
+    
+    def test_subclass_requires_name(self):
+        """Subclass without name property should fail to instantiate."""
+        class IncompleteValidator(BaseValidator):
+            async def validate(self, pick):
+                return ValidationResult(is_valid=True)
+        
+        with pytest.raises(TypeError, match="abstract"):
+            IncompleteValidator()
+    
+    def test_subclass_requires_validate(self):
+        """Subclass without validate method should fail to instantiate."""
+        class IncompleteValidator(BaseValidator):
+            @property
+            def name(self) -> str:
+                return "IncompleteValidator"
+        
+        with pytest.raises(TypeError, match="abstract"):
+            IncompleteValidator()
+
 
 # TODO: Import when implemented
 # from src.domain.rules.validation_chain import ValidationChain, ValidationResult
