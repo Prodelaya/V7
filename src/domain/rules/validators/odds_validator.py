@@ -16,58 +16,85 @@ Reference:
 - docs/03-ADRs.md: ADR-015 (Origin Filtering)
 - docs/05-Implementation.md: Task 3.2
 - docs/01-SRS.md: RF-003 (validation requirements)
-
-TODO: Implement OddsValidator
 """
 
-from typing import Tuple, Optional
+from src.domain.entities.pick import Pick
 
-from .base import BaseValidator
+from .base import BaseValidator, ValidationResult
 
 
 class OddsValidator(BaseValidator):
-    """
-    OPTIONAL SAFETY CHECK: Validator for betting odds range.
-    
+    """OPTIONAL SAFETY CHECK: Validator for betting odds range.
+
     Since ADR-015, the API filters odds at origin with min-odds/max-odds.
     This validator serves as a redundant safety check (~0ms overhead).
-    
+
     Can be disabled in validation chain if full trust in API is desired.
-    
+
     Checks that odds are within configured range:
-    - Minimum: 1.10 (from SRS)
-    - Maximum: 9.99 (from SRS)
-    
-    TODO: Implement based on:
-    - ADR-015 in docs/03-ADRs.md
-    - Task 3.2 in docs/05-Implementation.md
-    - RF-003 in docs/01-SRS.md
+    - Minimum: 1.10 (default, from SRS)
+    - Maximum: 9.99 (default, from SRS)
+
+    Example:
+        >>> validator = OddsValidator(min_odds=1.10, max_odds=9.99)
+        >>> result = await validator.validate(pick)
+        >>> result.is_valid
+        True
+
+    Reference:
+        - ADR-015 in docs/03-ADRs.md (Origin Filtering)
+        - Task 3.2 in docs/05-Implementation.md
+        - RF-003 in docs/01-SRS.md
     """
-    
+
     def __init__(self, min_odds: float = 1.10, max_odds: float = 9.99):
-        """
-        Initialize with odds range.
-        
+        """Initialize with odds range.
+
         Args:
             min_odds: Minimum acceptable odds (default 1.10)
             max_odds: Maximum acceptable odds (default 9.99)
+
+        Raises:
+            ValueError: If min_odds >= max_odds
         """
+        if min_odds >= max_odds:
+            raise ValueError(
+                f"min_odds ({min_odds}) must be less than max_odds ({max_odds})"
+            )
         self._min_odds = min_odds
         self._max_odds = max_odds
-    
+
     @property
     def name(self) -> str:
+        """Return validator identifier."""
         return "OddsValidator"
-    
-    async def validate(self, pick_data: dict) -> Tuple[bool, Optional[str]]:
-        """
-        Check if odds are within range.
-        
+
+    async def validate(self, pick: Pick) -> ValidationResult:
+        """Check if pick odds are within configured range.
+
+        Uses the Odds value object's is_in_range() method for validation.
+        This is a CPU-only operation with ~0ms overhead.
+
         Args:
-            pick_data: Must contain odds value
-            
+            pick: Pick entity to validate
+
         Returns:
-            (True, None) if valid
-            (False, "message") if invalid
+            ValidationResult with is_valid=True if odds in range,
+            or is_valid=False with error message if outside range.
+
+        Example:
+            >>> pick = Pick(odds=Odds(2.50), ...)
+            >>> result = await validator.validate(pick)
+            >>> result.is_valid
+            True
         """
-        raise NotImplementedError("OddsValidator.validate not implemented")
+        if pick.odds.is_in_range(self._min_odds, self._max_odds):
+            return ValidationResult(is_valid=True)
+
+        return ValidationResult(
+            is_valid=False,
+            error_message=(
+                f"Odds {pick.odds.value:.2f} outside range "
+                f"[{self._min_odds:.2f}, {self._max_odds:.2f}]"
+            ),
+        )
