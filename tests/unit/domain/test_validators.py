@@ -413,26 +413,145 @@ class TestProfitValidator:
         assert "[-1.00%, 25.00%]" in result.error_message
 
 
+from datetime import timedelta
+
+from src.domain.rules.validators.time_validator import TimeValidator
+
+
+def _create_pick_with_event_time(seconds_from_now: float) -> Pick:
+    """Helper to create Pick with event time relative to now."""
+    event_time = datetime.now(timezone.utc) + timedelta(seconds=seconds_from_now)
+    return Pick(
+        teams=("Team A", "Team B"),
+        odds=Odds(2.00),
+        market_type=MarketType.WIN1,
+        variety="",
+        event_time=event_time,
+        bookmaker="test_bookie",
+    )
+
+
 class TestTimeValidator:
-    """Tests for TimeValidator."""
-    
+    """Tests for TimeValidator (Task 3.4)."""
+
     def setup_method(self):
-        """Set up test fixtures."""
-        # self.validator = TimeValidator()
-        pass
-    
+        """Set up test fixtures with default min_seconds=0."""
+        self.validator = TimeValidator(min_seconds=0.0)
+
+    # -------------------------------------------------------------------------
+    # Constructor Tests
+    # -------------------------------------------------------------------------
+
+    def test_constructor_default_min_seconds(self):
+        """Should use default min_seconds=0."""
+        validator = TimeValidator()
+        assert validator.name == "TimeValidator"
+
+    def test_constructor_with_positive_min_seconds(self):
+        """Should accept positive min_seconds for buffer."""
+        validator = TimeValidator(min_seconds=60.0)
+        assert validator.name == "TimeValidator"
+
+    def test_constructor_with_zero_min_seconds(self):
+        """Should accept zero min_seconds."""
+        validator = TimeValidator(min_seconds=0.0)
+        assert validator.name == "TimeValidator"
+
+    def test_constructor_rejects_negative_min_seconds(self):
+        """Should raise ValueError for negative min_seconds."""
+        with pytest.raises(ValueError, match="cannot be negative"):
+            TimeValidator(min_seconds=-1.0)
+
+    # -------------------------------------------------------------------------
+    # Validation - Valid Cases (Event in Future)
+    # -------------------------------------------------------------------------
+
     @pytest.mark.asyncio
     async def test_future_event_passes(self):
-        """Event in future should pass."""
-        # future_time = int(time.time()) + 3600  # 1 hour from now
-        # is_valid, _ = await self.validator.validate({"time": future_time})
-        # assert is_valid
-        raise NotImplementedError("Test not implemented")
-    
+        """Event 1 hour in future should pass."""
+        pick = _create_pick_with_event_time(3600)  # +1 hour
+        result = await self.validator.validate(pick)
+        assert result.is_valid is True
+        assert result.error_message is None
+
+    @pytest.mark.asyncio
+    async def test_event_just_starting_passes(self):
+        """Event starting in 1 second should pass with min_seconds=0."""
+        pick = _create_pick_with_event_time(1)  # +1 second
+        result = await self.validator.validate(pick)
+        assert result.is_valid is True
+
+    @pytest.mark.asyncio
+    async def test_event_10_minutes_future_passes(self):
+        """Event 10 minutes in future should pass."""
+        pick = _create_pick_with_event_time(600)  # +10 minutes
+        result = await self.validator.validate(pick)
+        assert result.is_valid is True
+
+    @pytest.mark.asyncio
+    async def test_event_with_buffer_passes(self):
+        """Event with sufficient buffer should pass."""
+        validator = TimeValidator(min_seconds=60.0)
+        pick = _create_pick_with_event_time(120)  # +2 minutes
+        result = await validator.validate(pick)
+        assert result.is_valid is True
+
+    # -------------------------------------------------------------------------
+    # Validation - Invalid Cases (Event Started or Within Buffer)
+    # -------------------------------------------------------------------------
+
     @pytest.mark.asyncio
     async def test_past_event_fails(self):
-        """Event in past should fail."""
-        # past_time = int(time.time()) - 3600  # 1 hour ago
-        # is_valid, error = await self.validator.validate({"time": past_time})
-        # assert not is_valid
-        raise NotImplementedError("Test not implemented")
+        """Event 1 hour ago should fail."""
+        pick = _create_pick_with_event_time(-3600)  # -1 hour
+        result = await self.validator.validate(pick)
+        assert result.is_valid is False
+        assert "started" in result.error_message.lower()
+
+    @pytest.mark.asyncio
+    async def test_event_just_started_fails(self):
+        """Event that just started should fail."""
+        pick = _create_pick_with_event_time(-1)  # -1 second
+        result = await self.validator.validate(pick)
+        assert result.is_valid is False
+
+    @pytest.mark.asyncio
+    async def test_event_within_buffer_fails(self):
+        """Event within buffer period should fail."""
+        validator = TimeValidator(min_seconds=60.0)
+        pick = _create_pick_with_event_time(30)  # +30 seconds (< 60 buffer)
+        result = await validator.validate(pick)
+        assert result.is_valid is False
+        assert "minimum required" in result.error_message.lower()
+
+    @pytest.mark.asyncio
+    async def test_event_exactly_at_buffer_fails(self):
+        """Event exactly at buffer boundary should fail (not > min_seconds)."""
+        validator = TimeValidator(min_seconds=60.0)
+        pick = _create_pick_with_event_time(60)  # exactly 60 seconds
+        result = await validator.validate(pick)
+        assert result.is_valid is False
+
+    # -------------------------------------------------------------------------
+    # Error Message Format Tests
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_error_message_past_event_format(self):
+        """Error for past event should include elapsed time."""
+        pick = _create_pick_with_event_time(-60)  # -60 seconds
+        result = await self.validator.validate(pick)
+        assert result.is_valid is False
+        assert "60" in result.error_message
+        assert "started" in result.error_message.lower()
+        assert "ago" in result.error_message.lower()
+
+    @pytest.mark.asyncio
+    async def test_error_message_within_buffer_format(self):
+        """Error for within-buffer event should include both times."""
+        validator = TimeValidator(min_seconds=60.0)
+        pick = _create_pick_with_event_time(30)  # +30 seconds
+        result = await validator.validate(pick)
+        assert result.is_valid is False
+        assert "30" in result.error_message  # seconds until event
+        assert "60" in result.error_message  # minimum required
