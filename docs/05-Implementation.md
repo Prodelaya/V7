@@ -284,7 +284,7 @@ MAX_PROFIT: float = 25.0
 ```
 
 ### Checklist Fase 4
-- [ ] 4.1 Settings
+- [x] 4.1 Settings (Pydantic BaseSettings, 7 sub-configs, 37 tests)
 - [ ] 4.2 BookmakerConfig
 - [ ] 4.3 LoggingConfig
 - [ ] 4.4 .env.example
