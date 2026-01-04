@@ -89,25 +89,240 @@ def _create_pick_with_odds(odds_value: float) -> Pick:
 
 
 class TestValidationChain:
-    """Tests for ValidationChain."""
+    """Tests for ValidationChain (Task 3.5)."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        from src.domain.rules.validation_chain import ValidationChain
+        self.ValidationChain = ValidationChain
+
+    # -------------------------------------------------------------------------
+    # Constructor Tests
+    # -------------------------------------------------------------------------
+
+    def test_constructor_empty(self):
+        """Empty chain should be creatable."""
+        chain = self.ValidationChain()
+        assert len(chain) == 0
+        assert chain.is_empty is True
+
+    def test_constructor_with_validators(self):
+        """Chain with validators should store them."""
+        odds_validator = OddsValidator()
+        chain = self.ValidationChain([odds_validator])
+        assert len(chain) == 1
+        assert chain.is_empty is False
+
+    def test_validators_property_returns_copy(self):
+        """validators property should return copy to prevent mutation."""
+        odds_validator = OddsValidator()
+        chain = self.ValidationChain([odds_validator])
+        validators = chain.validators
+        validators.pop()  # Mutate the copy
+        assert len(chain) == 1  # Original unchanged
+
+    # -------------------------------------------------------------------------
+    # Add/Remove Validator Tests
+    # -------------------------------------------------------------------------
+
+    def test_add_validator(self):
+        """add_validator should append to chain."""
+        chain = self.ValidationChain()
+        chain.add_validator(OddsValidator())
+        assert len(chain) == 1
+        chain.add_validator(TimeValidator())
+        assert len(chain) == 2
+
+    def test_remove_validator_by_name(self):
+        """remove_validator should remove by name."""
+        chain = self.ValidationChain([OddsValidator(), TimeValidator()])
+        assert len(chain) == 2
+        result = chain.remove_validator("OddsValidator")
+        assert result is True
+        assert len(chain) == 1
+        assert chain.validators[0].name == "TimeValidator"
+
+    def test_remove_validator_not_found(self):
+        """remove_validator should return False if not found."""
+        chain = self.ValidationChain([OddsValidator()])
+        result = chain.remove_validator("NonExistent")
+        assert result is False
+        assert len(chain) == 1
+
+    # -------------------------------------------------------------------------
+    # Validation - Empty Chain
+    # -------------------------------------------------------------------------
 
     @pytest.mark.asyncio
     async def test_empty_chain_returns_valid(self):
-        """Empty chain should pass all picks."""
-        # chain = ValidationChain([])
-        # result = await chain.validate({})
-        # assert result.is_valid
-        raise NotImplementedError("Test not implemented - ValidationChain not yet done")
+        """Empty chain should pass all data."""
+        chain = self.ValidationChain([])
+        pick = _create_pick_with_odds(2.50)
+        result = await chain.validate(pick)
+        assert result.is_valid is True
+        assert result.error_message is None
+        assert result.failed_validator is None
+
+    # -------------------------------------------------------------------------
+    # Validation - Single Validator
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_single_validator_passes(self):
+        """Single passing validator should return valid."""
+        chain = self.ValidationChain([OddsValidator()])
+        pick = _create_pick_with_odds(2.50)
+        result = await chain.validate(pick)
+        assert result.is_valid is True
+
+    @pytest.mark.asyncio
+    async def test_single_validator_fails(self):
+        """Single failing validator should return invalid with details."""
+        chain = self.ValidationChain([OddsValidator()])
+        # 1.05 is valid for Odds VO (1.01-1000) but fails OddsValidator (1.10-9.99)
+        pick = _create_pick_with_odds(1.05)
+        result = await chain.validate(pick)
+        assert result.is_valid is False
+        assert result.failed_validator == "OddsValidator"
+        assert "1.05" in result.error_message
+
+    # -------------------------------------------------------------------------
+    # Validation - Fail-Fast Behavior
+    # -------------------------------------------------------------------------
 
     @pytest.mark.asyncio
     async def test_chain_stops_on_first_failure(self):
         """Chain should stop at first failing validator (fail-fast)."""
-        # chain = ValidationChain.create_default()
-        # bad_pick = {"odds": 0.5}  # Invalid odds
-        # result = await chain.validate(bad_pick)
-        # assert not result.is_valid
-        # assert result.failed_validator == "OddsValidator"
-        raise NotImplementedError("Test not implemented - ValidationChain not yet done")
+        # First validator will fail, second should never run
+        chain = self.ValidationChain([
+            OddsValidator(min_odds=5.0, max_odds=9.99),  # Will fail for 2.50
+            TimeValidator(min_seconds=9999),  # Would also fail, but shouldn't run
+        ])
+        pick = _create_pick_with_odds(2.50)
+        result = await chain.validate(pick)
+        assert result.is_valid is False
+        assert result.failed_validator == "OddsValidator"  # First one
+
+    @pytest.mark.asyncio
+    async def test_chain_continues_on_success(self):
+        """Chain should continue to next validator on success."""
+        # First passes, second fails
+        chain = self.ValidationChain([
+            OddsValidator(),  # Passes for 2.50
+            TimeValidator(min_seconds=9999),  # Will fail - too much buffer
+        ])
+        pick = _create_pick_with_odds(2.50)
+        result = await chain.validate(pick)
+        assert result.is_valid is False
+        assert result.failed_validator == "TimeValidator"  # Second one
+
+    @pytest.mark.asyncio
+    async def test_all_validators_pass(self):
+        """All passing validators should return valid."""
+        chain = self.ValidationChain([
+            OddsValidator(),
+            TimeValidator(),
+        ])
+        pick = _create_pick_with_event_time(3600)  # 1 hour from now
+        result = await chain.validate(pick)
+        assert result.is_valid is True
+
+    # -------------------------------------------------------------------------
+    # Validation - With Surebet (includes ProfitValidator)
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_validate_surebet_all_pass(self):
+        """Surebet validation should work with all validators."""
+        from src.domain.rules.validators.profit_validator import ProfitValidator
+
+        chain = self.ValidationChain([
+            OddsValidator(),
+            ProfitValidator(),
+            TimeValidator(),
+        ])
+        # Create surebet with future event time to pass TimeValidator
+        surebet = _create_surebet_with_future_event(2.5)
+        result = await chain.validate(surebet)
+        assert result.is_valid is True
+
+    @pytest.mark.asyncio
+    async def test_validate_surebet_profit_fails(self):
+        """ProfitValidator should fail for out-of-range profit."""
+        from src.domain.rules.validators.profit_validator import ProfitValidator
+
+        chain = self.ValidationChain([
+            OddsValidator(),
+            ProfitValidator(min_profit=-1.0, max_profit=10.0),
+        ])
+        surebet = _create_surebet_with_profit(15.0)  # Above max
+        result = await chain.validate(surebet)
+        assert result.is_valid is False
+        assert result.failed_validator == "ProfitValidator"
+
+    @pytest.mark.asyncio
+    async def test_validate_pick_skips_profit_validator(self):
+        """ProfitValidator should be skipped when input is Pick (not Surebet)."""
+        from src.domain.rules.validators.profit_validator import ProfitValidator
+
+        chain = self.ValidationChain([
+            OddsValidator(),
+            ProfitValidator(),  # Should be skipped
+            TimeValidator(),
+        ])
+        pick = _create_pick_with_event_time(3600)
+        result = await chain.validate(pick)
+        # Should pass because ProfitValidator is skipped for Pick input
+        assert result.is_valid is True
+
+    # -------------------------------------------------------------------------
+    # create_default() Tests
+    # -------------------------------------------------------------------------
+
+    def test_create_default_returns_chain(self):
+        """create_default should return configured chain."""
+        chain = self.ValidationChain.create_default()
+        assert isinstance(chain, self.ValidationChain)
+        assert len(chain) == 3
+
+    def test_create_default_has_correct_validators(self):
+        """create_default should include OddsValidator, ProfitValidator, TimeValidator."""
+        chain = self.ValidationChain.create_default()
+        validator_names = [v.name for v in chain.validators]
+        assert "OddsValidator" in validator_names
+        assert "ProfitValidator" in validator_names
+        assert "TimeValidator" in validator_names
+
+    def test_create_default_correct_order(self):
+        """create_default should have validators in correct order (CPU first)."""
+        chain = self.ValidationChain.create_default()
+        validator_names = [v.name for v in chain.validators]
+        assert validator_names == ["OddsValidator", "ProfitValidator", "TimeValidator"]
+
+    # -------------------------------------------------------------------------
+    # ValidationResult Tests
+    # -------------------------------------------------------------------------
+
+    def test_validation_result_is_frozen(self):
+        """ValidationResult should be immutable."""
+        from src.domain.rules.validation_chain import ValidationResult
+        result = ValidationResult(is_valid=True)
+        with pytest.raises(Exception):  # FrozenInstanceError
+            result.is_valid = False
+
+    def test_validation_result_with_all_fields(self):
+        """ValidationResult should store all fields."""
+        from src.domain.rules.validation_chain import ValidationResult
+        result = ValidationResult(
+            is_valid=False,
+            error_message="Test error",
+            failed_validator="TestValidator"
+        )
+        assert result.is_valid is False
+        assert result.error_message == "Test error"
+        assert result.failed_validator == "TestValidator"
+
+
 
 
 class TestOddsValidator:
@@ -277,6 +492,31 @@ def _create_surebet_with_profit(profit_value: float) -> Surebet:
         profit=Profit(profit_value),
     )
 
+
+def _create_surebet_with_future_event(profit_value: float, hours_from_now: float = 1.0) -> Surebet:
+    """Helper to create Surebet with specified profit and future event time."""
+    future_time = datetime.now(timezone.utc) + timedelta(hours=hours_from_now)
+    sharp_pick = Pick(
+        teams=("Team A", "Team B"),
+        odds=Odds(2.10),
+        market_type=MarketType.OVER,
+        variety="2.5",
+        event_time=future_time,
+        bookmaker="pinnaclesports",
+    )
+    soft_pick = Pick(
+        teams=("Team A", "Team B"),
+        odds=Odds(2.05),
+        market_type=MarketType.UNDER,
+        variety="2.5",
+        event_time=future_time,
+        bookmaker="test_soft_bookie",
+    )
+    return Surebet(
+        prong_sharp=sharp_pick,
+        prong_soft=soft_pick,
+        profit=Profit(profit_value),
+    )
 
 class TestProfitValidator:
     """Tests for ProfitValidator (Task 3.3)."""
@@ -555,3 +795,63 @@ class TestTimeValidator:
         assert result.is_valid is False
         assert "30" in result.error_message  # seconds until event
         assert "60" in result.error_message  # minimum required
+
+
+# =============================================================================
+# Tests adicionales para 100% cobertura (Tarea 3.6)
+# =============================================================================
+
+
+class TestValidatorModuleExports:
+    """Tests for validators module __init__.py exports."""
+
+    def test_base_validator_exportable(self):
+        """BaseValidator should be importable from validators package."""
+        from src.domain.rules.validators import BaseValidator, ValidationResult
+        assert BaseValidator is not None
+        assert ValidationResult is not None
+
+    def test_odds_validator_exportable(self):
+        """OddsValidator should be importable from validators package."""
+        from src.domain.rules.validators import OddsValidator
+        assert OddsValidator is not None
+
+    def test_profit_validator_exportable(self):
+        """ProfitValidator should be importable from validators package."""
+        from src.domain.rules.validators import ProfitValidator
+        assert ProfitValidator is not None
+
+    def test_time_validator_exportable(self):
+        """TimeValidator should be importable from validators package."""
+        from src.domain.rules.validators import TimeValidator
+        assert TimeValidator is not None
+
+
+class TestValidationChainEdgeCases:
+    """Additional edge case tests for ValidationChain."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        from src.domain.rules.validation_chain import ValidationChain
+        self.ValidationChain = ValidationChain
+
+    @pytest.mark.asyncio
+    async def test_chain_with_only_profit_validator_and_pick_input(self):
+        """Chain with only ProfitValidator should skip when given Pick."""
+        chain = self.ValidationChain([ProfitValidator()])
+        pick = _create_pick_with_odds(2.50)
+        result = await chain.validate(pick)
+        # Should pass because ProfitValidator is skipped for Pick input
+        assert result.is_valid is True
+
+    @pytest.mark.asyncio
+    async def test_chain_mixed_validators_with_surebet(self):
+        """Mixed validators should correctly route Surebet and Pick."""
+        chain = self.ValidationChain([
+            OddsValidator(),
+            ProfitValidator(max_profit=50.0),  # Wide range to pass
+            TimeValidator(),
+        ])
+        surebet = _create_surebet_with_future_event(5.0)
+        result = await chain.validate(surebet)
+        assert result.is_valid is True
