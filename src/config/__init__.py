@@ -8,17 +8,23 @@ Contains:
 Reference: docs/05-Implementation.md Phase 4
 """
 
-from .settings import (
-    Settings,
-    APISettings,
-    RedisSettings,
-    TelegramSettings,
-    PollingSettings,
-    ValidationSettings,
-    APIQuerySettings,
-    ProcessingSettings,
-)
 from .bookmakers import BookmakerConfig
+from .logging_config import (
+    LoggingSettings,
+    TelegramLogHandler,
+    setup_logging,
+    setup_logging_from_settings,
+)
+from .settings import (
+    APIQuerySettings,
+    APISettings,
+    PollingSettings,
+    ProcessingSettings,
+    RedisSettings,
+    Settings,
+    TelegramSettings,
+    ValidationSettings,
+)
 
 __all__ = [
     "Settings",
@@ -30,4 +36,9 @@ __all__ = [
     "APIQuerySettings",
     "ProcessingSettings",
     "BookmakerConfig",
+    "TelegramLogHandler",
+    "LoggingSettings",
+    "setup_logging",
+    "setup_logging_from_settings",
 ]
+
