@@ -286,7 +286,7 @@ MAX_PROFIT: float = 25.0
 ### Checklist Fase 4
 - [x] 4.1 Settings (Pydantic BaseSettings, 7 sub-configs, 37 tests)
 - [x] 4.2 BookmakerConfig (validation, query methods, 26 tests, 97% coverage)
-- [ ] 4.3 LoggingConfig
+- [x] 4.3 LoggingConfig (TelegramLogHandler, setup_logging, LoggingSettings, 45 tests)
 - [ ] 4.4 .env.example
 
 ---
@@ -513,7 +513,7 @@ Fase 0:  Setup          [████] 100%
 Fase 1:  Domain Core    [████] 100%  (9/9: Excepciones + Odds + Profit + MarketType + Tests VOs + Bookmaker + Pick + Surebet + Tests Entities)
 Fase 2:  Calculators    [████] 100%  (5/5: BaseCalculator + PinnacleCalculator + Factory + CalculationService + Tests)
 Fase 3:  Validators     [████] 100%  (6/6: BaseValidator, OddsValidator, ProfitValidator, TimeValidator, ValidationChain, Tests)
-Fase 4:  Config         [____] 0%
+Fase 4:  Config         [███_] 75%  (3/4: Settings + BookmakerConfig + LoggingConfig)
 Fase 5A: Redis          [____] 0%
 Fase 5B: API Client     [____] 0%
 Fase 5C: Messaging      [____] 0%
