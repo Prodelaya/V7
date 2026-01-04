@@ -230,8 +230,8 @@ Implementar validación modular y ordenada.
 - [x] 3.2 OddsValidator (interfaz correcta + 15 tests)
 - [x] 3.3 ProfitValidator (Surebet input, 15 tests)
 - [x] 3.4 TimeValidator (Pick input, min_seconds configurable, 14 tests)
-- [ ] 3.5 ValidationChain
-- [ ] 3.6 Tests
+- [x] 3.5 ValidationChain (fail-fast, composition, 20 tests)
+- [x] 3.6 Tests (coverage 100%, 76 tests)
 
 
 ---
@@ -512,7 +512,7 @@ async def main():
 Fase 0:  Setup          [████] 100%
 Fase 1:  Domain Core    [████] 100%  (9/9: Excepciones + Odds + Profit + MarketType + Tests VOs + Bookmaker + Pick + Surebet + Tests Entities)
 Fase 2:  Calculators    [████] 100%  (5/5: BaseCalculator + PinnacleCalculator + Factory + CalculationService + Tests)
-Fase 3:  Validators     [███_] 66%   (4/6: BaseValidator, OddsValidator, ProfitValidator, TimeValidator)
+Fase 3:  Validators     [████] 100%  (6/6: BaseValidator, OddsValidator, ProfitValidator, TimeValidator, ValidationChain, Tests)
 Fase 4:  Config         [____] 0%
 Fase 5A: Redis          [____] 0%
 Fase 5B: API Client     [____] 0%
@@ -520,7 +520,7 @@ Fase 5C: Messaging      [____] 0%
 Fase 6:  Application    [____] 0%
 Fase 7:  Integración    [____] 0%
 
-Total: 24/56 tareas completadas
+Total: 26/56 tareas completadas
 ```
 
 ---
