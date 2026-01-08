@@ -13,6 +13,6 @@
 #   gateway = GatewayFactory.create('stripe')
 
 from .gateway_factory import GatewayFactory
-from .stripe import StripeGateway, StripeConfig
+from .stripe import StripeConfig, StripeGateway
 
 __all__ = ["GatewayFactory", "StripeGateway", "StripeConfig"]

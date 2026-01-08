@@ -21,13 +21,12 @@ TestSubscriptionHandler:
 TODO: Implementar tests con pytest y mocks
 """
 
-import pytest
 
 # Placeholder - Tests pendientes de implementación
 
 class TestStripeWebhookHandler:
     """Tests para StripeWebhookHandler."""
-    
+
     def test_placeholder(self):
         """Placeholder test - eliminar al implementar."""
         assert True
@@ -35,7 +34,7 @@ class TestStripeWebhookHandler:
 
 class TestSubscriptionHandler:
     """Tests para SubscriptionHandler."""
-    
+
     def test_placeholder(self):
         """Placeholder test - eliminar al implementar."""
         assert True

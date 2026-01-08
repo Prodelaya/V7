@@ -13,10 +13,14 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
+from src.domain.value_objects.market_type import MarketType
 from src.domain.value_objects.odds import Odds
 from src.domain.value_objects.profit import Profit
-from src.domain.value_objects.market_type import MarketType
-from src.shared.exceptions import InvalidOddsError, InvalidProfitError, InvalidMarketError
+from src.shared.exceptions import (
+    InvalidMarketError,
+    InvalidOddsError,
+    InvalidProfitError,
+)
 
 
 class TestOdds:

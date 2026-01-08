@@ -8,8 +8,8 @@ Contains:
 Reference: docs/04-Structure.md, docs/05-Implementation.md (Phase 1)
 """
 
+from .market_type import MarketType
 from .odds import Odds
 from .profit import Profit
-from .market_type import MarketType
 
 __all__ = ["Odds", "Profit", "MarketType"]

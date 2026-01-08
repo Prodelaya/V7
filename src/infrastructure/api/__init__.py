@@ -7,7 +7,7 @@ Contains:
 Reference: docs/05-Implementation.md Phase 5
 """
 
-from .surebet_client import SurebetClient
 from .rate_limiter import AdaptiveRateLimiter
+from .surebet_client import SurebetClient
 
 __all__ = ["SurebetClient", "AdaptiveRateLimiter"]

@@ -14,7 +14,7 @@ TODO: Implement PickHandler
 """
 
 import asyncio
-from typing import List, Dict, Protocol
+from typing import Dict, List, Protocol
 
 
 class MessageGateway(Protocol):
@@ -30,7 +30,7 @@ class PickRepository(Protocol):
 class PickHandler:
     """
     Application service for processing picks.
-    
+
     Orchestrates the complete pick processing flow:
     1. Convert raw picks to DTOs/entities
     2. Validate with ValidationChain (fail-fast)
@@ -39,16 +39,16 @@ class PickHandler:
     5. Format message
     6. Send via Telegram (with priority queue)
     7. Mark as sent in Redis (with await, NOT fire-and-forget)
-    
+
     Uses asyncio.gather for parallel processing.
     ⚠️ NO workers/queues (from ADR-014 - adds latency)
-    
+
     TODO: Implement based on:
     - Task 6.4 in docs/05-Implementation.md
     - Section 3.2 in docs/02-PDR.md
     - ADR-014 in docs/03-ADRs.md
     """
-    
+
     def __init__(
         self,
         validation_chain,
@@ -60,7 +60,7 @@ class PickHandler:
     ):
         """
         Initialize PickHandler.
-        
+
         Args:
             validation_chain: ValidationChain for pick validation
             calculation_service: CalculationService for stake/min_odds
@@ -75,19 +75,19 @@ class PickHandler:
         self._pick_repository = pick_repository
         self._channel_mapping = channel_mapping
         self._semaphore = asyncio.Semaphore(max_concurrent)
-    
+
     async def process_surebets(self, surebets: List[dict]) -> Dict[str, int]:
         """
         Process a batch of surebets.
-        
+
         Uses asyncio.gather for parallel processing.
-        
+
         Args:
             surebets: Raw surebet data from API
-            
+
         Returns:
             Statistics dict with total, validated, sent, failed counts
-        
+
         Example flow (from docs/05-Implementation.md 6.4):
             1. Convertir raw_picks a DTOs/Entidades
             2. Para cada pick (con asyncio.gather):
@@ -100,11 +100,11 @@ class PickHandler:
             3. Retornar cantidad de picks enviados
         """
         raise NotImplementedError("PickHandler.process_surebets not implemented")
-    
+
     async def _process_single(self, surebet_data: dict, stats: Dict[str, int]) -> None:
         """
         Process a single surebet.
-        
+
         Uses semaphore for concurrency control.
         """
         raise NotImplementedError("PickHandler._process_single not implemented")

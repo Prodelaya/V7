@@ -31,7 +31,7 @@ import pytest
 
 class TestStripeWebhookAdapter:
     """Tests de integración para el adaptador de webhooks de Stripe."""
-    
+
     @pytest.mark.integration
     def test_placeholder(self):
         """Placeholder test - eliminar al implementar."""
@@ -40,7 +40,7 @@ class TestStripeWebhookAdapter:
 
 class TestPaymentWebhookHandler:
     """Tests para el handler genérico de eventos de pago."""
-    
+
     @pytest.mark.integration
     def test_placeholder(self):
         """Placeholder test - eliminar al implementar."""

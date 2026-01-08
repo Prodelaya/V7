@@ -19,13 +19,12 @@ Implementaciones testeables via mocks:
 TODO: Implementar tests con pytest y mocks
 """
 
-import pytest
 
 # Placeholder - Tests pendientes de implementación
 
 class TestPaymentGatewayPort:
     """Tests para la interfaz PaymentGateway."""
-    
+
     def test_placeholder(self):
         """Placeholder test - eliminar al implementar."""
         assert True
@@ -33,7 +32,7 @@ class TestPaymentGatewayPort:
 
 class TestCheckoutSessionDTO:
     """Tests para el DTO CheckoutSession."""
-    
+
     def test_placeholder(self):
         """Placeholder test - eliminar al implementar."""
         assert True
@@ -41,7 +40,7 @@ class TestCheckoutSessionDTO:
 
 class TestPaymentEventDTO:
     """Tests para el DTO PaymentEvent."""
-    
+
     def test_placeholder(self):
         """Placeholder test - eliminar al implementar."""
         assert True

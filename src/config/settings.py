@@ -15,22 +15,21 @@ from typing import List
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 logger = logging.getLogger(__name__)
 
 
 class APISettings(BaseSettings):
     """API connection settings.
-    
+
     Reads from environment variables with prefix API_.
     Example: API_URL, API_TOKEN, API_TIMEOUT
     """
-    
+
     model_config = SettingsConfigDict(
         env_prefix="API_",
         extra="ignore",
     )
-    
+
     url: str = Field(
         default="https://api.apostasseguras.com/request",
         description="Surebet API endpoint URL",
@@ -51,7 +50,7 @@ class APISettings(BaseSettings):
         le=10,
         description="Number of retry attempts",
     )
-    
+
     @field_validator("token")
     @classmethod
     def warn_empty_token(cls, v: str) -> str:
@@ -63,16 +62,16 @@ class APISettings(BaseSettings):
 
 class RedisSettings(BaseSettings):
     """Redis connection settings.
-    
+
     Reads from environment variables with prefix REDIS_.
     Example: REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
     """
-    
+
     model_config = SettingsConfigDict(
         env_prefix="REDIS_",
         extra="ignore",
     )
-    
+
     host: str = Field(default="localhost", description="Redis server hostname")
     port: int = Field(default=6379, ge=1, le=65535, description="Redis server port")
     password: str = Field(default="", description="Redis password")
@@ -84,7 +83,7 @@ class RedisSettings(BaseSettings):
         le=10000,
         description="Maximum connection pool size",
     )
-    
+
     @property
     def url(self) -> str:
         """Generate Redis connection URL."""
@@ -99,16 +98,16 @@ class RedisSettings(BaseSettings):
 
 class TelegramSettings(BaseSettings):
     """Telegram bot settings.
-    
+
     Reads from environment variables with prefix TELEGRAM_.
     TELEGRAM_BOT_TOKENS should be comma-separated list of tokens.
     """
-    
+
     model_config = SettingsConfigDict(
         env_prefix="TELEGRAM_",
         extra="ignore",
     )
-    
+
     # Store as string to avoid JSON parsing issues with List[str]
     # Uses validation_alias to map TELEGRAM_BOT_TOKENS env var
     bot_tokens_str: str = Field(
@@ -126,14 +125,14 @@ class TelegramSettings(BaseSettings):
         le=10000,
         description="Maximum messages in priority queue",
     )
-    
+
     @property
     def bot_tokens(self) -> List[str]:
         """Parse comma-separated tokens string into list."""
         if not self.bot_tokens_str:
             return []
         return [t.strip() for t in self.bot_tokens_str.split(",") if t.strip()]
-    
+
     @property
     def tokens(self) -> List[str]:
         """Alias for bot_tokens for backwards compatibility."""
@@ -142,15 +141,15 @@ class TelegramSettings(BaseSettings):
 
 class PollingSettings(BaseSettings):
     """API polling settings (from ADR-010).
-    
+
     Implements adaptive polling with exponential backoff.
     """
-    
+
     model_config = SettingsConfigDict(
         env_prefix="POLLING_",
         extra="ignore",
     )
-    
+
     base_interval: float = Field(
         default=0.5,
         ge=0.1,
@@ -169,7 +168,7 @@ class PollingSettings(BaseSettings):
         le=10,
         description="API rate limit (requests/second)",
     )
-    
+
     @model_validator(mode="after")
     def validate_intervals(self) -> "PollingSettings":
         """Ensure base_interval < max_interval."""
@@ -183,12 +182,12 @@ class PollingSettings(BaseSettings):
 
 class ValidationSettings(BaseSettings):
     """Pick validation settings (from SRS RF-003).
-    
+
     Defines acceptable ranges for odds, profit, and event timing.
     """
-    
+
     model_config = SettingsConfigDict(extra="ignore")
-    
+
     min_odds: float = Field(
         default=1.10,
         ge=1.01,
@@ -218,7 +217,7 @@ class ValidationSettings(BaseSettings):
         ge=0,
         description="Minimum seconds until event start",
     )
-    
+
     @model_validator(mode="after")
     def validate_ranges(self) -> "ValidationSettings":
         """Ensure min < max for odds and profit ranges."""
@@ -237,25 +236,25 @@ class ValidationSettings(BaseSettings):
 
 class APIQuerySettings(BaseSettings):
     """API query parameters with origin filtering (from ADR-015).
-    
+
     These parameters reduce data volume by ~60-70% by filtering at API level.
     """
-    
+
     model_config = SettingsConfigDict(
         env_prefix="API_",
         extra="ignore",
     )
-    
+
     product: str = Field(default="surebets", description="API product type")
     outcomes: int = Field(default=2, ge=2, le=10, description="Number of prongs (2=surebet)")
     limit: int = Field(default=5000, ge=1, le=10000, description="Records per request")
-    
+
     # Filtering parameters (use validation settings as defaults)
     min_profit: float = Field(default=-1.0, description="Minimum profit filter")
     max_profit: float = Field(default=25.0, description="Maximum profit filter")
     min_odds: float = Field(default=1.10, description="Minimum odds filter")
     max_odds: float = Field(default=9.99, description="Maximum odds filter")
-    
+
     # Static parameters
     hide_different_rules: bool = Field(
         default=True,
@@ -271,9 +270,9 @@ class APIQuerySettings(BaseSettings):
 
 class ProcessingSettings(BaseSettings):
     """Processing and concurrency settings."""
-    
+
     model_config = SettingsConfigDict(extra="ignore")
-    
+
     concurrent_picks: int = Field(
         default=250,
         ge=1,
@@ -302,15 +301,15 @@ class ProcessingSettings(BaseSettings):
 
 class Settings(BaseSettings):
     """Main application settings container.
-    
+
     Aggregates all sub-settings and loads from environment variables.
-    
+
     Usage:
         settings = Settings()
         print(settings.api.url)
         print(settings.redis.host)
         print(settings.telegram.tokens)
-    
+
     Environment variables (from docs/02-PDR.md Section 6.1):
     - API: API_URL, API_TOKEN, API_TIMEOUT
     - Redis: REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_USERNAME
@@ -318,13 +317,13 @@ class Settings(BaseSettings):
     - Polling: POLLING_BASE_INTERVAL, POLLING_MAX_INTERVAL
     - Validation: MIN_ODDS, MAX_ODDS, MIN_PROFIT, MAX_PROFIT
     """
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
-    
+
     # Sub-settings (loaded automatically from their respective env vars)
     api: APISettings = Field(default_factory=APISettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
@@ -333,7 +332,7 @@ class Settings(BaseSettings):
     validation: ValidationSettings = Field(default_factory=ValidationSettings)
     api_query: APIQuerySettings = Field(default_factory=APIQuerySettings)
     processing: ProcessingSettings = Field(default_factory=ProcessingSettings)
-    
+
     # Sports list (rarely changes, loaded from .env if needed)
     sports: List[str] = Field(
         default_factory=lambda: [
@@ -344,23 +343,23 @@ class Settings(BaseSettings):
             "WaterPolo",
         ]
     )
-    
+
     # Backward compatibility aliases
     @property
     def concurrent_picks(self) -> int:
         """Alias for processing.concurrent_picks."""
         return self.processing.concurrent_picks
-    
+
     @property
     def concurrent_requests(self) -> int:
         """Alias for processing.concurrent_requests."""
         return self.processing.concurrent_requests
-    
+
     @property
     def cache_ttl(self) -> int:
         """Alias for processing.cache_ttl."""
         return self.processing.cache_ttl
-    
+
     @property
     def cache_max_size(self) -> int:
         """Alias for processing.cache_max_size."""

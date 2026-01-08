@@ -11,26 +11,26 @@ Reference: docs/02-PDR.md Section 7.1
 import pytest
 
 from src.shared.exceptions import (
-    # Base
-    RetadorError,
-    # Domain
-    DomainError,
-    InvalidOddsError,
-    InvalidProfitError,
-    InvalidMarketError,
-    # Infrastructure
-    InfrastructureError,
-    ApiError,
     ApiConnectionError,
+    ApiError,
     ApiRateLimitError,
-    RedisError,
-    RedisConnectionError,
-    TelegramError,
-    TelegramSendError,
     # Application
     ApplicationError,
-    ValidationError,
+    # Domain
+    DomainError,
+    # Infrastructure
+    InfrastructureError,
+    InvalidMarketError,
+    InvalidOddsError,
+    InvalidProfitError,
     ProcessingError,
+    RedisConnectionError,
+    RedisError,
+    # Base
+    RetadorError,
+    TelegramError,
+    TelegramSendError,
+    ValidationError,
 )
 
 

@@ -7,30 +7,30 @@ Contains:
 Reference: docs/04-Structure.md
 """
 
-from .exceptions import (
-    # Base
-    RetadorError,
-    # Domain
-    DomainError,
-    InvalidOddsError,
-    InvalidProfitError,
-    InvalidMarketError,
-    # Infrastructure
-    InfrastructureError,
-    ApiError,
-    ApiConnectionError,
-    ApiRateLimitError,
-    RedisError,
-    RedisConnectionError,
-    TelegramError,
-    TelegramSendError,
-    # Application
-    ApplicationError,
-    ValidationError,
-    ProcessingError,
-)
 from .constants import (
     STAKE_EMOJIS,
+)
+from .exceptions import (
+    ApiConnectionError,
+    ApiError,
+    ApiRateLimitError,
+    # Application
+    ApplicationError,
+    # Domain
+    DomainError,
+    # Infrastructure
+    InfrastructureError,
+    InvalidMarketError,
+    InvalidOddsError,
+    InvalidProfitError,
+    ProcessingError,
+    RedisConnectionError,
+    RedisError,
+    # Base
+    RetadorError,
+    TelegramError,
+    TelegramSendError,
+    ValidationError,
 )
 
 __all__ = [

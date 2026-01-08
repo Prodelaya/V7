@@ -27,7 +27,7 @@ import pytest
 
 class TestChannelCreationIntegration:
     """Tests de integración para creación de canales."""
-    
+
     @pytest.mark.integration
     @pytest.mark.skip(reason="Requiere credenciales de Telegram de test")
     def test_placeholder(self):

@@ -13,67 +13,66 @@ Reference:
 - docs/03-ADRs.md: ADR-005 (validator order)
 """
 
+from dataclasses import FrozenInstanceError
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
+from src.domain.entities.pick import Pick
+from src.domain.entities.surebet import Surebet
 from src.domain.rules.validators.base import BaseValidator, ValidationResult
+from src.domain.rules.validators.odds_validator import OddsValidator
+from src.domain.rules.validators.profit_validator import ProfitValidator
+from src.domain.rules.validators.time_validator import TimeValidator
+from src.domain.value_objects.market_type import MarketType
+from src.domain.value_objects.odds import Odds
+from src.domain.value_objects.profit import Profit
 
 
 class TestBaseValidator:
     """Tests for BaseValidator abstract interface (Task 3.1)."""
-    
+
     def test_base_validator_is_abstract(self):
         """BaseValidator should not be instantiable directly."""
         with pytest.raises(TypeError, match="abstract"):
             BaseValidator()
-    
+
     def test_validation_result_creation(self):
         """ValidationResult should be creatable with is_valid."""
         result = ValidationResult(is_valid=True)
         assert result.is_valid is True
         assert result.error_message is None
-    
+
     def test_validation_result_with_error(self):
         """ValidationResult should store error message."""
         result = ValidationResult(is_valid=False, error_message="Test error")
         assert result.is_valid is False
         assert result.error_message == "Test error"
-    
+
     def test_validation_result_is_immutable(self):
         """ValidationResult should be frozen (immutable)."""
         result = ValidationResult(is_valid=True)
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(FrozenInstanceError):
             result.is_valid = False
-    
+
     def test_subclass_requires_name(self):
         """Subclass without name property should fail to instantiate."""
         class IncompleteValidator(BaseValidator):
             async def validate(self, pick):
                 return ValidationResult(is_valid=True)
-        
+
         with pytest.raises(TypeError, match="abstract"):
             IncompleteValidator()
-    
+
     def test_subclass_requires_validate(self):
         """Subclass without validate method should fail to instantiate."""
         class IncompleteValidator(BaseValidator):
             @property
             def name(self) -> str:
                 return "IncompleteValidator"
-        
+
         with pytest.raises(TypeError, match="abstract"):
             IncompleteValidator()
-
-
-# TODO: Import ValidationChain when implemented
-# from src.domain.rules.validation_chain import ValidationChain
-
-# Imports for OddsValidator tests
-from datetime import datetime, timezone
-
-from src.domain.entities.pick import Pick
-from src.domain.rules.validators.odds_validator import OddsValidator
-from src.domain.value_objects.market_type import MarketType
-from src.domain.value_objects.odds import Odds
 
 
 def _create_pick_with_odds(odds_value: float) -> Pick:
@@ -307,7 +306,7 @@ class TestValidationChain:
         """ValidationResult should be immutable."""
         from src.domain.rules.validation_chain import ValidationResult
         result = ValidationResult(is_valid=True)
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(FrozenInstanceError):
             result.is_valid = False
 
     def test_validation_result_with_all_fields(self):
@@ -356,8 +355,8 @@ class TestOddsValidator:
         validator = OddsValidator()
         assert validator.name == "OddsValidator"
         # Verify defaults by testing boundary
-        pick_at_min = _create_pick_with_odds(1.10)
-        pick_at_max = _create_pick_with_odds(9.99)
+        _create_pick_with_odds(1.10)
+        _create_pick_with_odds(9.99)
         # These should pass with defaults (tested async below)
 
     # -------------------------------------------------------------------------
@@ -460,11 +459,6 @@ class TestOddsValidator:
         pick = _create_pick_with_odds(1.05)
         result = await self.validator.validate(pick)
         assert "[1.10, 9.99]" in result.error_message
-
-
-from src.domain.entities.surebet import Surebet
-from src.domain.rules.validators.profit_validator import ProfitValidator
-from src.domain.value_objects.profit import Profit
 
 
 def _create_surebet_with_profit(profit_value: float) -> Surebet:
@@ -651,11 +645,6 @@ class TestProfitValidator:
         surebet = _create_surebet_with_profit(-2.0)
         result = await self.validator.validate(surebet)
         assert "[-1.00%, 25.00%]" in result.error_message
-
-
-from datetime import timedelta
-
-from src.domain.rules.validators.time_validator import TimeValidator
 
 
 def _create_pick_with_event_time(seconds_from_now: float) -> Pick:

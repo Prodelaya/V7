@@ -5,6 +5,6 @@ from .subscription_handler import SubscriptionHandler
 
 __all__ = [
     "PaymentWebhookHandler",
-    "StripeWebhookAdapter", 
+    "StripeWebhookAdapter",
     "SubscriptionHandler",
 ]

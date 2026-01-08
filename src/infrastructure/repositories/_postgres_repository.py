@@ -16,20 +16,20 @@ TODO: Implement when required (Phase 2+)
 class PostgresRepository:
     """
     PostgreSQL repository for historical pick data.
-    
+
     ⚠️ DEFERRED - Not in scope for v2.0
-    
+
     Future features:
     - Store all sent picks
     - Pick resolution (won/lost)
     - Yield calculations
     - Analytics dashboard
-    
+
     Reference:
     - ADR-007 in docs/03-ADRs.md
     - Section 5.2 in docs/01-SRS.md
     """
-    
+
     def __init__(self):
         raise NotImplementedError(
             "PostgresRepository is DEFERRED (ADR-007). "

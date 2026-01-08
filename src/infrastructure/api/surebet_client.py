@@ -29,29 +29,29 @@ class CursorRepository(Protocol):
 class SurebetClient:
     """
     Client for apostasseguras.com surebet API.
-    
+
     Features:
     - Cursor incremental polling (only new picks since last)
     - Adaptive rate limiting
     - Cursor persistence for recovery
-    
+
     API Parameters (from ADR-009):
     - product: surebets
     - order: created_at_desc
     - min-profit: -1
     - limit: 5000
     - cursor: {sort_by}:{id} of last pick
-    
+
     TODO(Fase 4): El parámetro 'bookmakers' se inyectará desde Settings.API_BOOKMAKERS
     que se carga del archivo .env. Ver: docs/09-Bookmakers-Configuration.md
-    
+
     TODO: Implement based on:
     - Task 5.5 in docs/05-Implementation.md
     - ADR-009 in docs/03-ADRs.md
     - RF-001 in docs/01-SRS.md
     - RequestQueue in legacy/RetadorV6.py (line 533)
     """
-    
+
     def __init__(
         self,
         api_url: str,
@@ -64,7 +64,7 @@ class SurebetClient:
     ):
         """
         Initialize API client.
-        
+
         Args:
             api_url: Base URL for API
             api_token: Bearer token for authentication
@@ -83,26 +83,26 @@ class SurebetClient:
         self._limit = limit
         self._last_cursor: Optional[str] = None
         self._session: Optional[aiohttp.ClientSession] = None
-    
+
     async def fetch_picks(self) -> List[dict]:
         """
         Fetch picks from API with cursor pagination.
-        
+
         Uses cursor from last call to get only new picks.
-        
+
         Returns:
             List of new surebet records
-        
+
         Reference:
         - ADR-009 for cursor format
         - RF-001 for API parameters
         """
         raise NotImplementedError("SurebetClient.fetch_picks not implemented")
-    
+
     def _build_params(self) -> dict:
         """
         Build API request parameters with origin filtering (ADR-015).
-        
+
         Optimized parameters that reduce data volume ~60-70%:
         - product: surebets
         - outcomes: 2 (only 2-leg surebets)
@@ -120,30 +120,30 @@ class SurebetClient:
         - sport: sports
         """
         raise NotImplementedError("SurebetClient._build_params not implemented")
-    
+
     async def _update_cursor(self, picks: List[dict]) -> None:
         """
         Update cursor from last pick in response.
-        
+
         Cursor format: {sort_by}:{id}
         Persists to Redis for recovery.
         """
         raise NotImplementedError("SurebetClient._update_cursor not implemented")
-    
+
     async def _load_cursor(self) -> None:
         """
         Load persisted cursor from repository.
-        
+
         Called on startup for recovery.
         """
         raise NotImplementedError("SurebetClient._load_cursor not implemented")
-    
+
     async def initialize(self) -> None:
         """
         Initialize client: create session, load cursor.
         """
         raise NotImplementedError("SurebetClient.initialize not implemented")
-    
+
     async def close(self) -> None:
         """
         Close client: cleanup session.

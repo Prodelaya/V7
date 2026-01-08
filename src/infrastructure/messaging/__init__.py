@@ -7,7 +7,7 @@ Contains:
 Reference: docs/05-Implementation.md Phase 5
 """
 
-from .telegram_gateway import TelegramGateway
 from .message_formatter import MessageFormatter
+from .telegram_gateway import TelegramGateway
 
 __all__ = ["TelegramGateway", "MessageFormatter"]
