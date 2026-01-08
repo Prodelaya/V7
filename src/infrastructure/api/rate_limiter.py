@@ -8,14 +8,13 @@ Implementation Requirements:
 - Formula: interval = min(5.0, 0.5 * 2^consecutive_429)
 
 Reference:
-- docs/05-Implementation.md: Task 5.4
-- docs/02-PDR.md: Section 3.3.1 (Adaptive Rate Limiter)
+- docs/05-Implementation.md: Task 5B.1
+- docs/02-PDR.md: Section 4.4 (Adaptive Rate Limiter)
 - docs/03-ADRs.md: ADR-010
 - docs/01-SRS.md: RF-002
-
-TODO: Implement AdaptiveRateLimiter
 """
 
+import asyncio
 
 
 class AdaptiveRateLimiter:
@@ -25,6 +24,8 @@ class AdaptiveRateLimiter:
     Adjusts polling interval based on API responses:
     - On success: gradually decrease interval
     - On 429: exponentially increase interval
+
+    Formula: interval = min(max_interval, base_interval * 2^consecutive_429)
 
     Intervals (from docs/01-SRS.md Appendix 6.3):
         | Scenario    | Interval |
@@ -36,24 +37,33 @@ class AdaptiveRateLimiter:
         | 4+ 429      | 5.0s     |
         | Success     | -1 level |
 
-    TODO: Implement based on:
-    - Task 5.4 in docs/05-Implementation.md
-    - ADR-010 in docs/03-ADRs.md
-    - Section 3.3.1 in docs/02-PDR.md
+    Example:
+        >>> limiter = AdaptiveRateLimiter()
+        >>> limiter.current_interval
+        0.5
+        >>> limiter.on_rate_limit()  # Received 429
+        >>> limiter.current_interval
+        1.0
+        >>> limiter.on_success()  # Request succeeded
+        >>> limiter.current_interval
+        0.5
     """
 
     def __init__(
         self,
+        requests_per_second: int = 2,
         base_interval: float = 0.5,
-        max_interval: float = 5.0
+        max_interval: float = 5.0,
     ):
         """
         Initialize rate limiter.
 
         Args:
-            base_interval: Base polling interval in seconds
-            max_interval: Maximum interval (cap)
+            requests_per_second: Maximum requests per second (for compatibility)
+            base_interval: Base polling interval in seconds (default: 0.5)
+            max_interval: Maximum interval cap (default: 5.0)
         """
+        self._requests_per_second = requests_per_second
         self._base_interval = base_interval
         self._max_interval = max_interval
         self._consecutive_429 = 0
@@ -68,26 +78,64 @@ class AdaptiveRateLimiter:
         Returns:
             Current interval in seconds
         """
-        raise NotImplementedError("AdaptiveRateLimiter.current_interval not implemented")
+        return min(
+            self._max_interval,
+            self._base_interval * (2 ** self._consecutive_429),
+        )
+
+    async def acquire(self) -> None:
+        """
+        Wait for the current interval before allowing next request.
+
+        This implements rate limiting by sleeping for the current_interval
+        duration between requests.
+        """
+        await asyncio.sleep(self.current_interval)
 
     async def wait_if_needed(self) -> None:
         """
         Wait for the current interval before next request.
-        """
-        raise NotImplementedError("AdaptiveRateLimiter.wait_if_needed not implemented")
 
-    def report_success(self) -> None:
+        Alias for acquire() for backward compatibility.
+        """
+        await self.acquire()
+
+    def on_success(self) -> None:
         """
         Report successful request, decrease interval gradually.
 
         Decrements consecutive_429 counter (min 0).
         """
-        raise NotImplementedError("AdaptiveRateLimiter.report_success not implemented")
+        self._consecutive_429 = max(0, self._consecutive_429 - 1)
 
-    def report_rate_limit(self) -> None:
+    def on_rate_limit(self) -> None:
         """
         Report 429 error, increase interval exponentially.
 
         Increments consecutive_429 counter.
         """
-        raise NotImplementedError("AdaptiveRateLimiter.report_rate_limit not implemented")
+        self._consecutive_429 += 1
+
+    def report_success(self) -> None:
+        """
+        Report successful request, decrease interval gradually.
+
+        Alias for on_success() for backward compatibility.
+        """
+        self.on_success()
+
+    def report_rate_limit(self) -> None:
+        """
+        Report 429 error, increase interval exponentially.
+
+        Alias for on_rate_limit() for backward compatibility.
+        """
+        self.on_rate_limit()
+
+    def reset(self) -> None:
+        """
+        Reset to initial state.
+
+        Sets consecutive_429 counter back to 0.
+        """
+        self._consecutive_429 = 0
