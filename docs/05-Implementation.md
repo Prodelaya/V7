@@ -322,7 +322,7 @@ Implementar la capa de persistencia con Redis.
 ### Checklist Fase 5A
 - [x] 5A.1 BaseRepository (ABC con 11 métodos: exists, exists_any, exists_batch, set, set_batch, get, delete, save_with_opposites, get_cursor, set_cursor, close)
 - [x] 5A.2 RedisRepository (11 métodos + _SimpleLocalCache inline, pipeline batch, timeout handling, 25 unit tests)
-- [ ] 5A.3 Tests Redis
+- [x] 5A.3 Tests Redis (26 tests integración con Redis real, coverage >80%)
 
 ---
 
