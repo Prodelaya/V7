@@ -1,31 +1,101 @@
 {% extends "base.html" %}
 
-{% block title %}Retador - Sistema de Alertas de Apuestas{% endblock %}
-{% block description %}Recibe alertas de valor en tiempo real directamente en tu canal de Telegram exclusivo.{% endblock
-%}
+{% block title %}Retador - Detecta Valor, Gana Más{% endblock %}
 
 {% block content %}
+<!-- Hero Section -->
 <section class="hero">
-    <!-- TODO: Implementar hero section con propuesta de valor -->
-    <h1>Retador</h1>
-    <p>Sistema automatizado de alertas de apuestas de valor</p>
-    <a href="https://t.me/RetadorBot" class="cta-button">Comenzar con Telegram</a>
+    <div class="container hero-content">
+        <h1 class="hero-title">
+            Apuestas de Valor <br>
+            <span class="gradient-text">Automatizadas</span>
+        </h1>
+        <p class="hero-subtitle">
+            Detectamos oportunidades donde las casas de apuestas se equivocan.
+            Recibe picks validados en tiempo real directamente en Telegram.
+        </p>
+        <div class="hero-cta">
+            <a href="https://t.me/RetadorBot" class="btn btn-lg btn-primary pulsate">
+                <i class="fa-brands fa-telegram"></i> Empezar Gratis
+            </a>
+            <a href="#features" class="btn btn-lg btn-outline">
+                Saber más
+            </a>
+        </div>
+    </div>
 </section>
 
-<section class="features">
-    <!-- TODO: Implementar sección de características -->
-    <h2>Características</h2>
-    <ul>
-        <li>Canal de Telegram exclusivo</li>
-        <li>Alertas en tiempo real</li>
-        <li>Múltiples casas de apuestas</li>
-        <li>Suscripción mensual flexible</li>
-    </ul>
+<!-- Stats Banner -->
+<section class="stats-banner">
+    <div class="container stats-grid">
+        <div class="stat-item">
+            <span class="stat-number">+15%</span>
+            <span class="stat-label">Yield Medio</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">24/7</span>
+            <span class="stat-label">Monitoreo</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">
+                < 500ms</span>
+                    <span class="stat-label">Latencia</span>
+        </div>
+    </div>
 </section>
 
-<section class="pricing">
-    <!-- TODO: Implementar sección de precios -->
-    <h2>Planes disponibles</h2>
-    <p>Consulta los planes en nuestro bot de Telegram</p>
+<!-- Features Section -->
+<section id="features" class="features section-padding">
+    <div class="container">
+        <h2 class="section-title text-center">¿Por qué Retador?</h2>
+        <div class="feature-grid">
+            <!-- Feature 1 -->
+            <div class="feature-card glass-panel">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-crosshairs"></i>
+                </div>
+                <h3>Pinnacle como Referencia</h3>
+                <p>Usamos las cuotas de Pinnacle (la casa más "sharp") para validar el valor real de cada apuesta.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="feature-card glass-panel">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <h3>100% Automatizado</h3>
+                <p>Olvídate de buscar manualmente. Nuestro bot escanea miles de mercados por segundo.</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="feature-card glass-panel">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h3>Telegram Instantáneo</h3>
+                <p>Recibe la alerta en el momento exacto. Un clic y estás dentro de la apuesta.</p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="feature-card glass-panel">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3>Validación Inteligente</h3>
+                <p>Filtramos errores de cuotas y falsos positivos para proteger tu bankroll.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Final -->
+<section class="cta-section section-padding text-center">
+    <div class="container">
+        <h2 class="section-title">¿Listo para ganar a las bookies?</h2>
+        <p class="section-subtitle">Únete a la comunidad de apostadores profesionales.</p>
+        <a href="https://t.me/RetadorBot" class="btn btn-xl btn-primary">
+            <i class="fa-brands fa-telegram"></i> Unirme al Canal
+        </a>
+    </div>
 </section>
 {% endblock %}

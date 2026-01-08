@@ -1,27 +1,30 @@
-"""
-FastAPI Web Application
-=======================
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
+import uvicorn
 
-Aplicación web minimalista para landing page y webhooks.
+from src.web.routes import pages
 
-Rutas:
-    - GET / : Landing page
-    - GET /faq : Preguntas frecuentes
-    - GET /terms : Términos y condiciones
-    - GET /privacy : Política de privacidad
-    - POST /webhooks/stripe : Endpoint para webhooks de Stripe
+# Configuración básica
+BASE_DIR = Path(__file__).resolve().parent
 
-Configuración:
-    - WEB_HOST: Host de la aplicación (0.0.0.0)
-    - WEB_PORT: Puerto de la aplicación (8000)
-    - WEB_BASE_URL: URL base pública (https://retador.es)
+app = FastAPI(
+    title="Retador v2.0",
+    description="Sistema profesional de Value Betting",
+    version="2.0.0",
+    docs_url=None,  # Desactivar docs en prod por seguridad/privacidad
+    redoc_url=None
+)
 
-Dependencias:
-    - FastAPI
-    - Jinja2
-    - uvicorn
+# Montar archivos estáticos (CSS, JS, Imágenes)
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
-TODO: Implementar aplicación FastAPI con templates Jinja2
-"""
+# Configurar Templates
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-# Placeholder - Implementación pendiente
+# Incluir routers
+app.include_router(pages.router)
+
+if __name__ == "__main__":
+    uvicorn.run("src.web.app:app", host="0.0.0.0", port=8000, reload=True)

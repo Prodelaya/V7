@@ -3,29 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Retador{% endblock %}</title>
-    <meta name="description" content="{% block description %}Sistema automatizado de suscripciones{% endblock %}">
+    <title>{% block title %}Retador - Value Betting{% endblock %}</title>
+    <meta name="description" content="{% block description %}Sistema profesional automatizado de apuestas de valor.{% endblock %}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/styles.css">
+    
     {% block head %}{% endblock %}
 </head>
 <body>
-    <header>
-        <!-- TODO: Implementar header con navegación -->
-        <nav>
-            <a href="/">Inicio</a>
-            <a href="/faq">FAQ</a>
-            <a href="/terms">Términos</a>
-            <a href="/privacy">Privacidad</a>
-        </nav>
+    <div class="background-glow"></div>
+    
+    <header class="navbar">
+        <div class="container navbar-container">
+            <a href="/" class="logo">
+                <i class="fa-solid fa-chart-line"></i> Retador
+            </a>
+            
+            <nav class="nav-links">
+                <a href="/" class="nav-link">Inicio</a>
+                <a href="/faq" class="nav-link">FAQ</a>
+                <a href="/terms" class="nav-link">Términos</a>
+            </nav>
+            
+            <div class="nav-actions">
+                <a href="https://t.me/RetadorBot" target="_blank" class="btn btn-primary">
+                    <i class="fa-brands fa-telegram"></i> Abrir Bot
+                </a>
+            </div>
+        </div>
     </header>
 
     <main>
         {% block content %}{% endblock %}
     </main>
 
-    <footer>
-        <!-- TODO: Implementar footer con enlaces y contacto -->
-        <p>&copy; 2024 Retador. Todos los derechos reservados.</p>
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <h3>Retador v2.0</h3>
+                <p>Automatización inteligente para apuestas de valor.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Legal</h4>
+                <a href="/terms">Términos y Condiciones</a>
+                <a href="/privacy">Política de Privacidad</a>
+            </div>
+            <div class="footer-social">
+                <a href="#"><i class="fa-brands fa-telegram"></i></a>
+                <a href="#"><i class="fa-brands fa-twitter"></i></a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Retador. Todos los derechos reservados.</p>
+        </div>
     </footer>
 </body>
 </html>

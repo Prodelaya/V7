@@ -1,22 +1,31 @@
-"""
-Pages Router
-============
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
 
-Rutas para páginas estáticas de la landing page.
+router = APIRouter()
 
-Endpoints:
-    - GET / : Landing page principal
-    - GET /faq : Preguntas frecuentes
-    - GET /terms : Términos y condiciones
-    - GET /privacy : Política de privacidad
+# Configurar templates (debe coincidir con la config en app.py, o inyectarse)
+BASE_DIR = Path(__file__).resolve().parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-Templates:
-    - templates/index.html
-    - templates/faq.html
-    - templates/terms.html
-    - templates/privacy.html
+@router.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    """Landing page principal."""
+    return templates.TemplateResponse("index.html", {"request": request})
 
-TODO: Implementar router con rutas para páginas estáticas
-"""
+@router.get("/faq", response_class=HTMLResponse)
+async def faq(request: Request):
+    """Página de Preguntas Frecuentes."""
+    return templates.TemplateResponse("faq.html", {"request": request})
 
-# Placeholder - Implementación pendiente
+@router.get("/terms", response_class=HTMLResponse)
+async def terms(request: Request):
+    """Términos y Condiciones."""
+    return templates.TemplateResponse("terms.html", {"request": request})
+
+@router.get("/privacy", response_class=HTMLResponse)
+async def privacy(request: Request):
+    """Política de Privacidad."""
+    return templates.TemplateResponse("privacy.html", {"request": request})
+

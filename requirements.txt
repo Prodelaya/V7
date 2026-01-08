@@ -22,3 +22,7 @@ typing_extensions==4.15.0
 yarl==1.22.0
 python-dotenv>=1.0.0
 pydantic-settings>=2.0.0
+
+fastapi
+uvicorn
+jinja2
