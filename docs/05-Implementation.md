@@ -353,7 +353,7 @@ Implementar el cliente de API con cursor incremental y rate limiting adaptativo.
 ### Checklist Fase 5B
 - [x] 5B.1 AdaptiveRateLimiter (exponential backoff, 6 tests, formula min(5.0, 0.5×2^n))
 - [x] 5B.2 SurebetClient (cursor incremental, APIQuerySettings, 6 tests)
-- [ ] 5B.3 Tests API
+- [x] 5B.3 Tests API (36 tests, 95% coverage, ADR-009/010/015 compliance)
 
 ---
 
@@ -398,8 +398,8 @@ Implementar el sistema de mensajería con Telegram.
 ```
 
 ### Checklist Fase 5C
-- [ ] 5C.1 MessageFormatter
-- [ ] 5C.2 _adjust_domain (RF-010)
+- [x] 5C.1 MessageFormatter (10 métodos, 44 tests)
+- [x] 5C.2 _adjust_domain (RF-010) (bet365, betway, bwin, pokerstars, versus)
 - [ ] 5C.3 TelegramGateway
 - [ ] 5C.4 Tests Messaging
 - [ ] 5C.5 LocalCache
