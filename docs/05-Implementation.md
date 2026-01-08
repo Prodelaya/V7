@@ -352,7 +352,7 @@ Implementar el cliente de API con cursor incremental y rate limiting adaptativo.
 
 ### Checklist Fase 5B
 - [x] 5B.1 AdaptiveRateLimiter (exponential backoff, 6 tests, formula min(5.0, 0.5×2^n))
-- [ ] 5B.2 SurebetClient
+- [x] 5B.2 SurebetClient (cursor incremental, APIQuerySettings, 6 tests)
 - [ ] 5B.3 Tests API
 
 ---
