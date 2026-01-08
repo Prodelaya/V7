@@ -41,6 +41,7 @@ dev = [
     "mypy>=1.7.0",
     "ruff>=0.1.6",
     "black>=23.11.0",
+    "testcontainers[redis]>=4.0.0",
 ]
 
 [project.scripts]
