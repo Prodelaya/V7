@@ -122,6 +122,7 @@ class SurebetClient:
         api_query: Optional["APIQuerySettings"] = None,
         bookmakers: Optional[List[str]] = None,
         sports: Optional[List[str]] = None,
+        timeout: int = 30,
     ):
         """Initialize API client.
 
@@ -133,6 +134,7 @@ class SurebetClient:
             api_query: Optional APIQuerySettings for configurable params from .env
             bookmakers: Optional list of bookmaker identifiers
             sports: Optional list of sport identifiers
+            timeout: Request timeout in seconds (from Settings.api.timeout)
         """
         self._url = api_url
         self._token = api_token
@@ -141,6 +143,7 @@ class SurebetClient:
         self._api_query = api_query
         self._bookmakers = bookmakers or []
         self._sports = sports or []
+        self._timeout = timeout
         self._cursor = CursorState()
         self._session: Optional[aiohttp.ClientSession] = None
 
@@ -152,7 +155,7 @@ class SurebetClient:
         """
         self._session = aiohttp.ClientSession(
             headers={"Authorization": f"Bearer {self._token}"},
-            timeout=aiohttp.ClientTimeout(total=30),
+            timeout=aiohttp.ClientTimeout(total=self._timeout),
         )
         await self._load_cursor()
 
