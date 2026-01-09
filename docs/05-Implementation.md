@@ -400,7 +400,7 @@ Implementar el sistema de mensajería con Telegram.
 ### Checklist Fase 5C
 - [x] 5C.1 MessageFormatter (10 métodos, 44 tests)
 - [x] 5C.2 _adjust_domain (RF-010) (bet365, betway, bwin, pokerstars, versus)
-- [ ] 5C.3 TelegramGateway
+- [x] 5C.3 TelegramGateway (heap priority, dynamic multi-bot, 26 tests)
 - [ ] 5C.4 Tests Messaging
 - [ ] 5C.5 LocalCache
 
