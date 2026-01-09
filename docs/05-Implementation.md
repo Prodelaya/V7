@@ -402,7 +402,7 @@ Implementar el sistema de mensajería con Telegram.
 - [x] 5C.2 _adjust_domain (RF-010) (bet365, betway, bwin, pokerstars, versus)
 - [x] 5C.3 TelegramGateway (heap priority, dynamic multi-bot, 26 tests)
 - [x] 5C.4 Tests Messaging (31 tests integración: formatter+service, gateway, cache, heap, e2e, RF-010)
-- [ ] 5C.5 LocalCache
+- [x] 5C.5 LocalCache (LRU + TTL + async-safe, 27 unit tests)
 
 ---
 
