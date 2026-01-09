@@ -442,11 +442,12 @@ async def process_batch(self, raw_picks: List[dict]) -> int:
 ```
 
 ### Checklist Fase 6
-- [ ] 6.1 PickDTO
+- [x] 6.1 PickDTO (Hybrid Approach: delegates to Surebet, adds app-layer validation, 22 tests, 98% coverage)
 - [ ] 6.2 DuplicateValidator
 - [ ] 6.3 OppositeMarketService
 - [ ] 6.4 PickHandler
 - [ ] 6.5 Tests Handler
+
 
 ---
 
@@ -514,13 +515,13 @@ Fase 1:  Domain Core    [████] 100%  (9/9: Excepciones + Odds + Profit +
 Fase 2:  Calculators    [████] 100%  (5/5: BaseCalculator + PinnacleCalculator + Factory + CalculationService + Tests)
 Fase 3:  Validators     [████] 100%  (6/6: BaseValidator, OddsValidator, ProfitValidator, TimeValidator, ValidationChain, Tests)
 Fase 4:  Config         [████] 100%  (4/4: Settings + BookmakerConfig + LoggingConfig + .env.example)
-Fase 5A: Redis          [____] 0%
-Fase 5B: API Client     [____] 0%
-Fase 5C: Messaging      [____] 0%
-Fase 6:  Application    [____] 0%
+Fase 5A: Redis          [████] 100%  (3/3: BaseRepository + RedisRepository + Tests)
+Fase 5B: API Client     [████] 100%  (3/3: AdaptiveRateLimiter + SurebetClient + Tests)
+Fase 5C: Messaging      [████] 100%  (5/5: MessageFormatter + _adjust_domain + TelegramGateway + Tests + LocalCache)
+Fase 6:  Application    [█___] 20%   (1/5: PickDTO ✓)
 Fase 7:  Integración    [____] 0%
 
-Total: 26/56 tareas completadas
+Total: 45/56 tareas completadas (80%)
 ```
 
 ---
