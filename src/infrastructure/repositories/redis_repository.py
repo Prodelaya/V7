@@ -18,13 +18,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections import OrderedDict
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import redis.asyncio as aioredis
 from redis.asyncio import ConnectionPool
 from redis.exceptions import RedisError
 
+from ..cache.local_cache import LocalCache
 from .base import BaseRepository
 
 if TYPE_CHECKING:
@@ -33,91 +33,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-
-class _SimpleLocalCache:
-    """Simple LRU cache with TTL for first-level caching before Redis.
-
-    Used to reduce Redis round-trips for frequently accessed keys.
-    Thread-safe for async usage via simple dict operations.
-
-    This is a simplified inline implementation as a workaround
-    for the unimplemented LocalCache class.
-    """
-
-    def __init__(self, max_size: int = 2000, default_ttl: int = 300) -> None:
-        """Initialize the cache.
-
-        Args:
-            max_size: Maximum number of entries before LRU eviction.
-            default_ttl: Default time-to-live in seconds.
-        """
-        self._cache: OrderedDict[str, bool] = OrderedDict()
-        self._expiry: Dict[str, float] = {}
-        self._max_size = max_size
-        self._default_ttl = default_ttl
-
-    def get(self, key: str) -> bool:
-        """Check if key exists and is not expired.
-
-        Args:
-            key: Cache key to check.
-
-        Returns:
-            True if key exists and not expired, False otherwise.
-        """
-        if key not in self._cache:
-            return False
-
-        # Check expiry
-        if time.time() > self._expiry.get(key, float("inf")):
-            # Expired, remove it
-            self._cache.pop(key, None)
-            self._expiry.pop(key, None)
-            return False
-
-        # Move to end for LRU
-        self._cache.move_to_end(key)
-        return True
-
-    def set(self, key: str, ttl: Optional[int] = None) -> None:
-        """Mark key as existing with optional TTL.
-
-        Args:
-            key: Cache key to set.
-            ttl: Time-to-live in seconds (uses default if None).
-        """
-        # Evict oldest if at capacity
-        if len(self._cache) >= self._max_size and key not in self._cache:
-            self._cache.popitem(last=False)
-            # Also clean up expiry for evicted key
-            oldest_key = next(iter(self._expiry), None)
-            if oldest_key:
-                self._expiry.pop(oldest_key, None)
-
-        self._cache[key] = True
-        self._cache.move_to_end(key)
-
-        effective_ttl = ttl if ttl is not None else self._default_ttl
-        self._expiry[key] = time.time() + effective_ttl
-
-    def delete(self, key: str) -> None:
-        """Remove key from cache.
-
-        Args:
-            key: Cache key to remove.
-        """
-        self._cache.pop(key, None)
-        self._expiry.pop(key, None)
-
-    def clear(self) -> None:
-        """Clear all entries."""
-        self._cache.clear()
-        self._expiry.clear()
-
-    def __len__(self) -> int:
-        """Return number of entries in cache."""
-        return len(self._cache)
 
 
 class RedisRepository(BaseRepository):
@@ -187,8 +102,8 @@ class RedisRepository(BaseRepository):
         self._pool: Optional[ConnectionPool] = None
         self._redis: Optional[aioredis.Redis] = None
 
-        # Local cache for reducing Redis round-trips
-        self._local_cache = _SimpleLocalCache(max_size=local_cache_size)
+        # Local cache for reducing Redis round-trips (uses proper LocalCache)
+        self._local_cache = LocalCache(max_size=local_cache_size, default_ttl=300)
 
         logger.info(
             f"RedisRepository initialized: {host}:{port}/db{db} "
@@ -249,7 +164,7 @@ class RedisRepository(BaseRepository):
             True if key exists.
         """
         # Check local cache first
-        if self._local_cache.get(key):
+        if self._local_cache.exists(key):
             return True
 
         # Check Redis
@@ -260,7 +175,7 @@ class RedisRepository(BaseRepository):
 
                 if result:
                     # Update local cache if exists in Redis
-                    self._local_cache.set(key)
+                    await self._local_cache.set(key, True)
 
                 return bool(result)
 
@@ -287,7 +202,7 @@ class RedisRepository(BaseRepository):
 
         # Check local cache first
         for key in keys:
-            if self._local_cache.get(key):
+            if self._local_cache.exists(key):
                 return True
 
         # Check Redis with pipeline
@@ -301,9 +216,9 @@ class RedisRepository(BaseRepository):
                     results = await pipe.execute()
 
                 # Update cache for any found keys
-                for key, exists in zip(keys, results, strict=True):
-                    if exists:
-                        self._local_cache.set(key)
+                for key, found in zip(keys, results, strict=True):
+                    if found:
+                        await self._local_cache.set(key, True)
                         return True
 
                 return False
@@ -335,7 +250,7 @@ class RedisRepository(BaseRepository):
 
         # Check local cache first
         for key in keys:
-            if self._local_cache.get(key):
+            if self._local_cache.exists(key):
                 results[key] = True
             else:
                 keys_to_check.append(key)
@@ -350,7 +265,7 @@ class RedisRepository(BaseRepository):
             exists_bool = bool(exists)
             results[key] = exists_bool
             if exists_bool:
-                self._local_cache.set(key)
+                await self._local_cache.set(key, True)
 
         return results
 
@@ -398,7 +313,7 @@ class RedisRepository(BaseRepository):
                 await client.setex(key, ttl, value)
 
                 # Update local cache
-                self._local_cache.set(key, ttl)
+                await self._local_cache.set(key, True, ttl)
 
                 return True
 
@@ -435,7 +350,7 @@ class RedisRepository(BaseRepository):
 
                 # Update local cache for all items
                 for key, _, ttl in items:
-                    self._local_cache.set(key, ttl)
+                    await self._local_cache.set(key, True, ttl)
 
                 return True
 
@@ -483,7 +398,7 @@ class RedisRepository(BaseRepository):
                 result = await client.delete(key)
 
                 # Remove from local cache
-                self._local_cache.delete(key)
+                await self._local_cache.delete(key)
 
                 return bool(result)
 
@@ -576,7 +491,7 @@ class RedisRepository(BaseRepository):
     async def close(self) -> None:
         """Close Redis connection and cleanup resources."""
         # Clear local cache
-        self._local_cache.clear()
+        await self._local_cache.clear()
 
         # Close Redis connection
         if self._redis is not None:

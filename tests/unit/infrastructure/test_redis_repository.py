@@ -19,20 +19,14 @@ import pytest
 from src.domain.entities.pick import Pick
 from src.domain.value_objects.market_type import MarketType
 from src.domain.value_objects.odds import Odds
-from src.infrastructure.repositories.redis_repository import (
-    RedisRepository,
-    _SimpleLocalCache,
-)
+from src.infrastructure.repositories.redis_repository import RedisRepository
 
 # ============================================================================
 # Fixtures
 # ============================================================================
 
 
-@pytest.fixture
-def local_cache() -> _SimpleLocalCache:
-    """Create a local cache instance."""
-    return _SimpleLocalCache(max_size=100, default_ttl=60)
+
 
 
 @pytest.fixture
@@ -82,59 +76,6 @@ def sample_pick() -> Pick:
 
 
 # ============================================================================
-# Tests for _SimpleLocalCache
-# ============================================================================
-
-
-class TestSimpleLocalCache:
-    """Unit tests for the inline local cache."""
-
-    def test_get_returns_false_for_missing_key(self, local_cache: _SimpleLocalCache):
-        """get() should return False for non-existent key."""
-        assert local_cache.get("nonexistent") is False
-
-    def test_set_and_get(self, local_cache: _SimpleLocalCache):
-        """set() should make get() return True."""
-        local_cache.set("test:key")
-        assert local_cache.get("test:key") is True
-
-    def test_delete_removes_key(self, local_cache: _SimpleLocalCache):
-        """delete() should remove key from cache."""
-        local_cache.set("test:key")
-        assert local_cache.get("test:key") is True
-        local_cache.delete("test:key")
-        assert local_cache.get("test:key") is False
-
-    def test_clear_removes_all(self, local_cache: _SimpleLocalCache):
-        """clear() should remove all entries."""
-        local_cache.set("key1")
-        local_cache.set("key2")
-        assert len(local_cache) == 2
-        local_cache.clear()
-        assert len(local_cache) == 0
-
-    def test_lru_eviction(self):
-        """Oldest entry should be evicted when at max capacity."""
-        cache = _SimpleLocalCache(max_size=3, default_ttl=60)
-        cache.set("key1")
-        cache.set("key2")
-        cache.set("key3")
-        assert len(cache) == 3
-
-        # Adding 4th key should evict key1 (oldest)
-        cache.set("key4")
-        assert len(cache) == 3
-        assert cache.get("key1") is False
-        assert cache.get("key4") is True
-
-    def test_ttl_expiration(self, local_cache: _SimpleLocalCache):
-        """Expired entries should not be returned."""
-        # Set with 0 TTL (immediate expiry)
-        local_cache.set("expired", ttl=-1)  # Already expired
-        assert local_cache.get("expired") is False
-
-
-# ============================================================================
 # Tests for RedisRepository
 # ============================================================================
 
@@ -164,7 +105,7 @@ class TestRedisRepositoryExists:
     async def test_exists_checks_cache_first(self, redis_repo: RedisRepository):
         """exists() should check local cache before Redis."""
         # Pre-populate cache
-        redis_repo._local_cache.set("cached:key")
+        await redis_repo._local_cache.set("cached:key", True)
 
         # Should return True without calling Redis
         result = await redis_repo.exists("cached:key")
@@ -180,7 +121,7 @@ class TestRedisRepositoryExists:
         await redis_repo.exists("new:key")
 
         # Should now be in cache
-        assert redis_repo._local_cache.get("new:key") is True
+        assert redis_repo._local_cache.exists("new:key") is True
 
 
 class TestRedisRepositoryExistsAny:
@@ -199,7 +140,7 @@ class TestRedisRepositoryExistsAny:
         self, redis_repo: RedisRepository
     ):
         """exists_any() should return True if any key in cache."""
-        redis_repo._local_cache.set("key2")
+        await redis_repo._local_cache.set("key2", True)
         result = await redis_repo.exists_any(["key1", "key2", "key3"])
         assert result is True
 
@@ -238,7 +179,7 @@ class TestRedisRepositorySet:
         mock_redis.setex = AsyncMock(return_value=True)
         await redis_repo.set("test:key", "value", ttl=60)
 
-        assert redis_repo._local_cache.get("test:key") is True
+        assert redis_repo._local_cache.exists("test:key") is True
 
 
 class TestRedisRepositorySetBatch:
@@ -335,7 +276,7 @@ class TestRedisRepositoryClose:
         self, redis_repo: RedisRepository, mock_redis: AsyncMock
     ):
         """close() should clear local cache."""
-        redis_repo._local_cache.set("test:key")
+        await redis_repo._local_cache.set("test:key", True)
         mock_redis.close = AsyncMock()
 
         await redis_repo.close()
