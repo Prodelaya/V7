@@ -81,7 +81,7 @@ class PickDTO:
         # Delegate parsing to Surebet (uses sharp_hierarchy for role detection)
         surebet = Surebet.from_api_response(
             data,
-            sharp_bookmakers=bookmaker_config._sharp_set,
+            sharp_bookmakers=bookmaker_config.get_sharp_bookmakers(),
         )
 
         # Application-layer validation: soft must be a target bookmaker

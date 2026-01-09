@@ -40,16 +40,6 @@ from .pick import Pick
 # Bookmakers classified as "sharp" (reference bookmakers)
 # Sharp bookmakers have the most accurate odds and are used as counterparty
 # Reference: legacy/RetadorV6.py BOOKIE_HIERARCHY
-#
-# TODO(Fase 4): Esta constante será reemplazada por configuración desde .env
-# En Fase 4, Settings.SHARP_BOOKMAKERS se inyectará en from_api_response()
-# Ver: docs/09-Bookmakers-Configuration.md para el diseño detallado
-#
-SHARP_BOOKMAKERS: FrozenSet[str] = frozenset({
-    "pinnaclesports",
-    # bet365 can act as sharp in some contexts but is commented out
-    # to match current production behavior
-})
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -136,7 +126,7 @@ class Surebet:
     def from_api_response(
         cls,
         data: Dict[str, Any],
-        sharp_bookmakers: Optional[FrozenSet[str]] = None,
+        sharp_bookmakers: FrozenSet[str],
     ) -> Surebet:
         """Create Surebet from API response.
 
@@ -146,8 +136,8 @@ class Surebet:
         Args:
             data: Raw API response dict with 'prongs' array and 'profit'.
                   Expected structure from docs/08-API-Documentation.md.
-            sharp_bookmakers: Optional set of sharp bookmaker names.
-                            Defaults to SHARP_BOOKMAKERS module constant.
+            sharp_bookmakers: Set of bookmaker names that are considered sharp.
+                            REQUIRED to determine role of prongs.
 
         Returns:
             Surebet entity with properly assigned prongs.
@@ -165,12 +155,13 @@ class Surebet:
             ...         {"bk": "retabet_apuestas", "value": 2.05, ...},
             ...     ]
             ... }
-            >>> surebet = Surebet.from_api_response(data)
+            >>> sharps = frozenset({"pinnaclesports"})
+            >>> surebet = Surebet.from_api_response(data, sharp_bookmakers=sharps)
             >>> surebet.sharp_bookmaker
             'pinnaclesports'
         """
-        if sharp_bookmakers is None:
-            sharp_bookmakers = SHARP_BOOKMAKERS
+        if not sharp_bookmakers:
+            raise ValueError("sharp_bookmakers must be provided and not empty")
 
         # Validate prongs structure
         prongs = data.get("prongs", [])

@@ -17,7 +17,7 @@ import pytest
 
 from src.domain.entities.bookmaker import Bookmaker, BookmakerType
 from src.domain.entities.pick import Pick
-from src.domain.entities.surebet import SHARP_BOOKMAKERS, Surebet
+from src.domain.entities.surebet import Surebet
 from src.domain.value_objects.market_type import MarketType
 from src.domain.value_objects.odds import Odds
 from src.domain.value_objects.profit import Profit
@@ -927,20 +927,7 @@ def valid_surebet_api_response() -> dict:
     }
 
 
-class TestSharpBookmakers:
-    """Tests for SHARP_BOOKMAKERS constant."""
 
-    def test_pinnacle_is_sharp(self) -> None:
-        """pinnaclesports should be in SHARP_BOOKMAKERS."""
-        assert "pinnaclesports" in SHARP_BOOKMAKERS
-
-    def test_sharp_bookmakers_is_frozen(self) -> None:
-        """SHARP_BOOKMAKERS should be a frozenset."""
-        assert isinstance(SHARP_BOOKMAKERS, frozenset)
-
-    def test_sharp_bookmakers_not_empty(self) -> None:
-        """SHARP_BOOKMAKERS should have at least one member."""
-        assert len(SHARP_BOOKMAKERS) >= 1
 
 
 class TestSurebetCreation:
@@ -1057,26 +1044,34 @@ class TestSurebetValidation:
 class TestSurebetFromApiResponse:
     """Tests for Surebet.from_api_response() factory method."""
 
+    @pytest.fixture
+    def sharps(self) -> frozenset[str]:
+        return frozenset({"pinnaclesports"})
+
     def test_create_from_valid_response(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should create Surebet from valid API response."""
-        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=sharps
+        )
         assert surebet.sharp_bookmaker == "pinnaclesports"
         assert surebet.soft_bookmaker == "retabet_apuestas"
         assert surebet.profit.value == 2.5
         assert surebet.teams == ("Fnatic", "G2")
 
     def test_determines_roles_correctly_pinnacle_first(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should correctly identify sharp when Pinnacle is first prong."""
-        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=sharps
+        )
         assert surebet.prong_sharp.bookmaker == "pinnaclesports"
         assert surebet.prong_soft.bookmaker == "retabet_apuestas"
 
     def test_determines_roles_correctly_pinnacle_second(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should correctly identify sharp when Pinnacle is second prong."""
         # Swap the order of prongs
@@ -1084,57 +1079,73 @@ class TestSurebetFromApiResponse:
             valid_surebet_api_response["prongs"][1],  # retabet first
             valid_surebet_api_response["prongs"][0],  # pinnacle second
         ]
-        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=sharps
+        )
         assert surebet.prong_sharp.bookmaker == "pinnaclesports"
         assert surebet.prong_soft.bookmaker == "retabet_apuestas"
 
-    def test_extracts_surebet_id(self, valid_surebet_api_response: dict) -> None:
+    def test_extracts_surebet_id(
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
+    ) -> None:
         """Should extract surebet_id from API response."""
-        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=sharps
+        )
         assert surebet.surebet_id == 785141488
 
     def test_extracts_created_timestamp(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should convert created timestamp from ms to datetime."""
-        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=sharps
+        )
         assert surebet.created is not None
         assert surebet.created.tzinfo == timezone.utc
 
     def test_missing_profit_raises_error(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should raise error if profit is missing."""
         del valid_surebet_api_response["profit"]
         with pytest.raises(ValueError, match="Missing 'profit'"):
-            Surebet.from_api_response(valid_surebet_api_response)
+            Surebet.from_api_response(
+                valid_surebet_api_response, sharp_bookmakers=sharps
+            )
 
     def test_missing_prongs_raises_error(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should raise error if prongs is missing."""
         del valid_surebet_api_response["prongs"]
         with pytest.raises(ValueError, match="Expected exactly 2 prongs"):
-            Surebet.from_api_response(valid_surebet_api_response)
+            Surebet.from_api_response(
+                valid_surebet_api_response, sharp_bookmakers=sharps
+            )
 
     def test_wrong_prongs_count_raises_error(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should raise error if prongs count is not 2."""
         valid_surebet_api_response["prongs"] = [
             valid_surebet_api_response["prongs"][0]
         ]
         with pytest.raises(ValueError, match="Expected exactly 2 prongs"):
-            Surebet.from_api_response(valid_surebet_api_response)
+            Surebet.from_api_response(
+                valid_surebet_api_response, sharp_bookmakers=sharps
+            )
 
     def test_no_sharp_bookmaker_raises_error(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should raise error if neither prong is from a sharp bookmaker."""
         valid_surebet_api_response["prongs"][0]["bk"] = "bet365"
         valid_surebet_api_response["prongs"][1]["bk"] = "retabet_apuestas"
         with pytest.raises(ValueError, match="No sharp bookmaker found"):
-            Surebet.from_api_response(valid_surebet_api_response)
+            Surebet.from_api_response(
+                valid_surebet_api_response, sharp_bookmakers=sharps
+            )
 
     def test_custom_sharp_bookmakers(
         self, valid_surebet_api_response: dict
@@ -1150,17 +1161,23 @@ class TestSurebetFromApiResponse:
         assert surebet.sharp_bookmaker == "bet365"
 
     def test_handles_missing_created(
-        self, valid_surebet_api_response: dict
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
     ) -> None:
         """Should handle missing created field gracefully."""
         del valid_surebet_api_response["created"]
-        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=sharps
+        )
         assert surebet.created is None
 
-    def test_handles_missing_id(self, valid_surebet_api_response: dict) -> None:
+    def test_handles_missing_id(
+        self, valid_surebet_api_response: dict, sharps: frozenset[str]
+    ) -> None:
         """Should handle missing id field gracefully."""
         del valid_surebet_api_response["id"]
-        surebet = Surebet.from_api_response(valid_surebet_api_response)
+        surebet = Surebet.from_api_response(
+            valid_surebet_api_response, sharp_bookmakers=sharps
+        )
         assert surebet.surebet_id is None
 
 

@@ -143,6 +143,14 @@ class BookmakerConfig:
         """
         return self.channel_mapping.get(bookmaker)
 
+    def get_sharp_bookmakers(self) -> FrozenSet[str]:
+        """Get the set of sharp bookmakers.
+
+        Returns:
+            FrozenSet of sharp bookmaker identifiers.
+        """
+        return self._sharp_set
+
     def is_valid_contrapartida(self, soft: str, sharp: str) -> bool:
         """Check if sharp is a valid counterpart for soft.
 
