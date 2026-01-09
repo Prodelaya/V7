@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Language**: Python 3.10+ (compatible with 3.10, 3.11, 3.12)
 - **Type**: Async application (asyncio)
-- **Status**: **Implementation pending** - All code files contain placeholders with TODOs
+- **Status**: **80% implemented** (45/56 tasks complete) - Phase 6 in progress
 
 ## Build & Development Commands
 
@@ -77,16 +77,16 @@ src/
 
 ## Critical Architecture Decisions (ADRs)
 
-| Decision | Rationale |
-|----------|-----------|
-| NO Bloom Filter (ADR-012) | 1% false positives = lost picks = lost money for bettors |
-| NO fire-and-forget Redis (ADR-013) | Race conditions cause duplicates |
-| Redis pipeline batch (ADR-004) | Balance latency vs reliability for dedup |
-| asyncio.gather, no workers (ADR-014) | Internal queues add latency; gather is sufficient |
-| Cursor incremental (ADR-009) | Avoid reprocessing already-handled picks |
-| Adaptive polling backoff (ADR-010) | Auto-recovery from rate limits (0.5s base, 5.0s max) |
-| Priority heap for Telegram (ADR-006) | Higher-value picks sent first; graceful degradation |
-| Origin filtering (ADR-015) | Filter at API level reduces data volume ~60-70% |
+| Decision                             | Rationale                                                |
+| ------------------------------------ | -------------------------------------------------------- |
+| NO Bloom Filter (ADR-012)            | 1% false positives = lost picks = lost money for bettors |
+| NO fire-and-forget Redis (ADR-013)   | Race conditions cause duplicates                         |
+| Redis pipeline batch (ADR-004)       | Balance latency vs reliability for dedup                 |
+| asyncio.gather, no workers (ADR-014) | Internal queues add latency; gather is sufficient        |
+| Cursor incremental (ADR-009)         | Avoid reprocessing already-handled picks                 |
+| Adaptive polling backoff (ADR-010)   | Auto-recovery from rate limits (0.5s base, 5.0s max)     |
+| Priority heap for Telegram (ADR-006) | Higher-value picks sent first; graceful degradation      |
+| Origin filtering (ADR-015)           | Filter at API level reduces data volume ~60-70%          |
 
 ## Domain-Specific Calculations
 
@@ -104,31 +104,41 @@ min_odds = 1 / (1.01 - 1/odd_pinnacle)  # Exact cutoff at -1% profit
 
 ## Implementation Status
 
-**Current State**: All Python files contain placeholder code with TODOs. Implementation follows phased approach:
+**Current State**: Phase 6 (Application Layer) at 20% - PickDTO complete, PickHandler pending.
 
-1. ✅ **Phase 0**: Setup complete (pyproject.toml, structure, dependencies)
-2. ⏳ **Phase 1**: Domain Core (Value Objects + Entities) - **TO DO**
-3. ⏳ **Phase 2**: Calculators (Strategy Pattern) - **TO DO**
-4. ⏳ **Phase 3**: Validators (Chain of Responsibility) - **TO DO**
-5. ⏳ **Phase 4**: Config (Pydantic Settings) - **TO DO**
-6. ⏳ **Phase 5A**: Infrastructure - Redis - **TO DO**
-7. ⏳ **Phase 5B**: Infrastructure - API Client - **TO DO**
-8. ⏳ **Phase 5C**: Infrastructure - Messaging - **TO DO**
-9. ⏳ **Phase 6**: Application Layer (Handler) - **TO DO**
-10. ⏳ **Phase 7**: Integration & Testing - **TO DO**
+```
+Fase 0:  Setup          [████] 100%
+Fasa 1:  Domain Core    [████] 100%  (9/9)
+Fase 2:  Calculators    [████] 100%  (5/5: 46 tests)
+Fase 3:  Validators     [████] 100%  (6/6: 76 tests)
+Fase 4:  Config         [████] 100%  (4/4: 108 tests)
+Fase 5A: Redis          [████] 100%  (3/3: 26 tests)
+Fase 5B: API Client     [████] 100%  (3/3: 36 tests)
+Fase 5C: Messaging      [████] 100%  (5/5: 31 tests)
+Fase 6:  Application    [█___] 20%   (1/5: PickDTO ✓)
+Fase 7:  Integración    [____] 0%
+
+Total: 45/56 tareas completadas (80%)
+```
+
+**Next tasks** (Fase 6):
+- [ ] 6.2 DuplicateValidator
+- [ ] 6.3 OppositeMarketService  
+- [ ] 6.4 PickHandler
+- [ ] 6.5 Tests Handler
 
 **See** `docs/05-Implementation.md` for detailed task breakdown.
 
 ## Key Configuration Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `MIN_ODDS` | 1.10 | Minimum acceptable odds |
-| `MAX_ODDS` | 9.99 | Maximum acceptable odds |
-| `MIN_PROFIT` | -1.0 | Minimum profit threshold |
-| `MAX_PROFIT` | 25.0 | Maximum profit threshold |
-| `POLLING_BASE_INTERVAL` | 0.5s | Base API poll interval |
-| `POLLING_MAX_INTERVAL` | 5.0s | Max interval under backoff |
+| Parameter               | Default | Description                |
+| ----------------------- | ------- | -------------------------- |
+| `MIN_ODDS`              | 1.10    | Minimum acceptable odds    |
+| `MAX_ODDS`              | 9.99    | Maximum acceptable odds    |
+| `MIN_PROFIT`            | -1.0    | Minimum profit threshold   |
+| `MAX_PROFIT`            | 25.0    | Maximum profit threshold   |
+| `POLLING_BASE_INTERVAL` | 0.5s    | Base API poll interval     |
+| `POLLING_MAX_INTERVAL`  | 5.0s    | Max interval under backoff |
 
 ## Implementation Guidelines
 
@@ -161,16 +171,16 @@ When implementing code from placeholders:
 
 Configuration via `.env` file (see `.env.example`):
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `API_URL` | apostasseguras.com | Surebet API endpoint |
-| `API_TOKEN` | - | API authentication token |
-| `REDIS_HOST` | localhost | Redis server host |
-| `REDIS_PORT` | 6379 | Redis server port |
-| `TELEGRAM_BOT_TOKENS` | - | Comma-separated bot tokens |
-| `TELEGRAM_LOG_CHANNEL` | 0 | Channel ID for logging |
-| `CONCURRENT_PICKS` | 250 | Max concurrent pick processing |
-| `CACHE_TTL` | 10 | Local cache TTL in seconds |
+| Variable               | Default            | Description                    |
+| ---------------------- | ------------------ | ------------------------------ |
+| `API_URL`              | apostasseguras.com | Surebet API endpoint           |
+| `API_TOKEN`            | -                  | API authentication token       |
+| `REDIS_HOST`           | localhost          | Redis server host              |
+| `REDIS_PORT`           | 6379               | Redis server port              |
+| `TELEGRAM_BOT_TOKENS`  | -                  | Comma-separated bot tokens     |
+| `TELEGRAM_LOG_CHANNEL` | 0                  | Channel ID for logging         |
+| `CONCURRENT_PICKS`     | 250                | Max concurrent pick processing |
+| `CACHE_TTL`            | 10                 | Local cache TTL in seconds     |
 
 ## Documentation
 
@@ -183,15 +193,15 @@ Configuration via `.env` file (see `.env.example`):
 
 ## Quick Reference: Where to Implement What
 
-| Feature | File(s) to Implement |
-|---------|---------------------|
-| Change stake profit ranges | `src/domain/services/calculators/pinnacle.py` |
-| Add new bookmaker | `src/config/bookmakers.py` |
-| Change message format | `src/infrastructure/messaging/message_formatter.py` |
-| Add new validation | `src/domain/rules/validators/` (new file) + update `validation_chain.py` |
-| Change API parameters | `src/infrastructure/api/surebet_client.py` |
-| Change polling behavior | `src/infrastructure/api/rate_limiter.py` |
-| Add new sharp calculator | `src/domain/services/calculators/` (new file) + update `factory.py` |
+| Feature                    | File(s) to Implement                                                     |
+| -------------------------- | ------------------------------------------------------------------------ |
+| Change stake profit ranges | `src/domain/services/calculators/pinnacle.py`                            |
+| Add new bookmaker          | `src/config/bookmakers.py`                                               |
+| Change message format      | `src/infrastructure/messaging/message_formatter.py`                      |
+| Add new validation         | `src/domain/rules/validators/` (new file) + update `validation_chain.py` |
+| Change API parameters      | `src/infrastructure/api/surebet_client.py`                               |
+| Change polling behavior    | `src/infrastructure/api/rate_limiter.py`                                 |
+| Add new sharp calculator   | `src/domain/services/calculators/` (new file) + update `factory.py`      |
 
 ## Common Development Patterns
 
