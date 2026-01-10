@@ -4,19 +4,21 @@
  */
 
 :root {
-    /* Colors */
-    --bg-dark: #0f172a;
-    --bg-darker: #020617;
-    --primary: #3b82f6;
-    --primary-glow: #3b82f680;
-    --accent: #8b5cf6;
+    /* Colors - Winning Green Theme */
+    --bg-dark: #020617;
+    --bg-darker: #000000;
+    --primary: #10b981;
+    /* Emerald-500 */
+    --primary-glow: rgba(16, 185, 129, 0.5);
+    --accent: #34d399;
+    /* Emerald-400 */
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
-    --border-glass: rgba(255, 255, 255, 0.1);
+    --border-glass: rgba(16, 185, 129, 0.2);
 
     /* Layout */
     --container-width: 1200px;
-    --nav-height: 80px;
+    --nav-height: 90px;
 }
 
 /* Reset & Base */
@@ -27,7 +29,7 @@
 }
 
 body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Outfit', sans-serif;
     color: var(--text-main);
     background-color: var(--bg-dark);
     line-height: 1.6;
@@ -51,7 +53,7 @@ ul {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at center, rgb(16, 29, 66) 0%, var(--bg-dark) 50%);
+    background: radial-gradient(circle at center, rgba(6, 78, 59, 0.3) 0%, var(--bg-dark) 50%);
     z-index: -1;
     pointer-events: none;
 }
@@ -62,7 +64,7 @@ ul {
 }
 
 .gradient-text {
-    background: linear-gradient(45deg, var(--primary), var(--accent), #38bdf8);
+    background: linear-gradient(45deg, var(--primary), var(--accent), #a7f3d0);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -76,7 +78,7 @@ ul {
     width: 100%;
     top: 0;
     z-index: 1000;
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(2, 6, 23, 0.85);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-glass);
 }
