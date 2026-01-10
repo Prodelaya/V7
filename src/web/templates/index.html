@@ -4,14 +4,13 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero">
-    <div class="container hero-content">
-        <h1 class="hero-title">
-            Pronósticos Deportivos <br>
-            <span class="gradient-text">Profesionales</span>
-        </h1>
+<section class="hero middle-center">
+    <div class="container hero-content text-center">
+        <!-- Giant Brand Title -->
+        <h1 class="brand-title glitch" data-text="RETADOR">RETADOR</h1>
+
         <p class="hero-subtitle">
-            Basados en Probabilidad y Estadística. No vendemos apuestas, vendemos ciencia y rentabilidad matemática.
+            Pronósticos Deportivos Basados en <span class="highlight-text">Probabilidad y Estadística</span>.
         </p>
         <div class="hero-cta">
             <a href="https://t.me/RetadorBot" class="btn btn-lg btn-primary pulsate">
@@ -84,44 +83,6 @@
                 <h3>Validación Inteligente</h3>
                 <p>Filtramos errores de cuotas y falsos positivos para proteger tu bankroll.</p>
             </div>
-        </div>
-    </div>
-</section>
-<!-- Bookmakers Section -->
-<section id="bookmakers" class="bookmakers section-padding">
-    <div class="container text-center">
-        <h2 class="section-title">Trabajamos con las Mejores Bookies</h2>
-        <p class="section-subtitle mb-5">Nuestros algoritmos están calibrados para estas casas</p>
-
-        <!-- Top 3 -->
-        <div class="bookies-grid top-tier">
-            <div class="bookie-card glass-panel bet365-glow">
-                <div class="bookie-logo css-logo bet365">bet365</div>
-                <span class="bookie-tag">Recomendada</span>
-            </div>
-            <div class="bookie-card glass-panel sportium-glow">
-                <div class="bookie-logo css-logo sportium">Sportium</div>
-                <span class="bookie-tag">Alta Liquidez</span>
-            </div>
-            <div class="bookie-card glass-panel winamax-glow">
-                <div class="bookie-logo css-logo winamax">Winamax</div>
-                <span class="bookie-tag">Buenas Margin</span>
-            </div>
-        </div>
-
-        <!-- Otras -->
-        <div class="bookies-list mt-5">
-            <h4>También soportamos:</h4>
-            <div class="bookie-badges">
-                <span class="badge-glass">Codere</span>
-                <span class="badge-glass">Retabet</span>
-                <span class="badge-glass">YaassCasino</span>
-                <span class="badge-glass">Bwin</span>
-                <span class="badge-glass">Versus</span>
-                <span class="badge-glass">Pokerstars</span>
-            </div>
-            <p class="cta-text mt-4 text-muted">¿No ves tu casa de apuestas? <a href="#"
-                    class="text-primary">¡Consultanos!</a></p>
         </div>
     </div>
 </section>
@@ -200,8 +161,21 @@
             </div>
         </div>
 
-        <p class="text-center mt-5 text-muted">¿Buscas otra bookie? <a href="#" class="text-primary">Contáctanos</a>
-            para habilitarla.</p>
+        <div class="supported-bookies mt-5 text-center">
+            <h4 class="mb-4 text-muted">También compatibles</h4>
+            <div class="bookie-logos-row">
+                <!-- Images handled by CSS filter: grayscale(1) -> grayscale(0) on hover -->
+                <img src="/static/img/codere.png" alt="Codere" class="secondary-bookie">
+                <img src="/static/img/bwin.png" alt="Bwin" class="secondary-bookie">
+                <img src="/static/img/yaass.png" alt="Yaass" class="secondary-bookie">
+                <!-- Fallback chips for others -->
+                <span class="badge-glass">Versus</span>
+                <span class="badge-glass">Pokerstars</span>
+                <span class="badge-glass">Retabet</span>
+            </div>
+            <p class="cta-text mt-4 text-muted small">¿No ves tu casa? <a href="#" class="text-primary">Contáctanos</a>
+            </p>
+        </div>
     </div>
 </section>
 

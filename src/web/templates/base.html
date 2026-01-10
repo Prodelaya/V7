@@ -30,15 +30,22 @@
     <header class="navbar">
         <div class="container navbar-container">
             <a href="/" class="logo">
-                <img src="/static/img/logo_icon.png" alt="Retador" style="height: 60px;">
+                <img src="/static/img/logo_final.png" alt="Retador" style="height: 70px;">
             </a>
 
             <nav class="nav-links">
                 <a href="/" class="nav-link">Inicio</a>
                 <a href="/faq" class="nav-link">FAQ</a>
-                <!-- Language Selector -->
-                <div class="lang-selector">
-                    <a href="#" title="English" class="nav-link" style="font-size: 1.5rem;">🇬🇧</a>
+
+                <!-- Language Selector Dropdown -->
+                <div class="lang-dropdown">
+                    <button class="lang-btn">
+                        <span class="flag">🇪🇸</span> <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="lang-content">
+                        <a href="#"><span class="flag">🇪🇸</span> Español</a>
+                        <a href="#"><span class="flag">🇬🇧</span> English</a>
+                    </div>
                 </div>
             </nav>
 
