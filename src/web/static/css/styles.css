@@ -404,12 +404,13 @@ ul {
     margin-bottom: 5rem;
     color: var(--accent);
     /* Electric Blue/Cyan */
-    text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+    /* Hard shadow instead of glow for cleaner look */
     /* Blue Glow */
     text-align: center;
     border-bottom: 3px solid var(--primary);
     /* Pink underline */
-    box-shadow: 0 10px 20px -10px var(--primary-glow);
+    box-shadow: 0 5px 10px -5px var(--primary-glow);
     display: inline-block;
     padding: 0 2rem;
     background: transparent;
