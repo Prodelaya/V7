@@ -706,6 +706,12 @@ ul {
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
 }
 
+/* Bigger Bet365 as requested */
+.bet365-bg .bookie-img {
+    max-height: 100px;
+    max-width: 90%;
+}
+
 .bookie-fallback {
     display: none;
     /* Only shows if img fails loading */
