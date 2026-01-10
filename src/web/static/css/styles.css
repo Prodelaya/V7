@@ -511,6 +511,129 @@ ul {
     font-size: 0.85rem;
 }
 
+/* Bookmakers Section */
+.bookies-grid {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.bookie-card {
+    padding: 1.5rem;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.bookie-card:hover {
+    transform: translateY(-5px);
+}
+
+.bookie-logo {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+}
+
+/* CSS Logos Mimic */
+.css-logo.bet365 {
+    background-color: #0c6e4e;
+    color: #ffdf1b;
+    font-family: Arial, sans-serif;
+}
+
+.bet365-glow:hover {
+    box-shadow: 0 0 20px rgba(12, 110, 78, 0.4);
+    border-color: #0c6e4e;
+}
+
+.css-logo.sportium {
+    background-color: #e30613;
+    color: white;
+    font-style: italic;
+}
+
+.sportium-glow:hover {
+    box-shadow: 0 0 20px rgba(227, 6, 19, 0.4);
+    border-color: #e30613;
+}
+
+.css-logo.winamax {
+    background-color: #1a1a1a;
+    color: #c72626;
+    /* Winamax Red */
+    font-family: 'Arial Black', sans-serif;
+    letter-spacing: 0;
+}
+
+.winamax-glow:hover {
+    box-shadow: 0 0 20px rgba(199, 38, 38, 0.4);
+    border-color: #c72626;
+}
+
+.bookie-tag {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.bookies-list h4 {
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.bookie-badges {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.badge-glass {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    border-radius: 99px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.badge-glass:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: white;
+    cursor: default;
+}
+
+/* Utils */
+.mb-5 {
+    margin-bottom: 3rem;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.mt-5 {
+    margin-top: 3rem;
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
 /* Responsive Adjustments */
 @media (max-width: 1024px) {
     .pricing-card.popular {
