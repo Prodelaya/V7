@@ -402,14 +402,18 @@ ul {
     font-family: 'Permanent Marker', cursive;
     font-size: 3.5rem;
     margin-bottom: 5rem;
-    color: #fff;
-    text-shadow: 2px 2px 0px var(--accent);
-    /* Cleaner shadow */
+    color: var(--primary);
+    /* Neon Pink */
+    text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+    /* Neon Glow */
     text-align: center;
-    border-bottom: 5px solid var(--toxic);
+    border-bottom: 3px solid var(--accent);
+    /* Cyan underline */
+    box-shadow: 0 10px 20px -10px var(--accent-glow);
     display: inline-block;
     padding: 0 2rem;
-    background: #000;
+    background: transparent;
+    /* No black box */
     transform: rotate(-1deg);
 }
 
