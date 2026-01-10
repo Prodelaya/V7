@@ -630,19 +630,26 @@ ul {
 
 .pricing-features {
     text-align: left;
-    margin-bottom: 2rem;
+    /* Pricing Features - Neon List */
 }
 
 .pricing-features li {
     margin-bottom: 1rem;
-    color: var(--text-muted);
+    color: var(--accent);
+    /* Electric Cyan */
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.1rem;
+    text-shadow: 0 0 2px rgba(0, 255, 255, 0.4);
 }
 
 .pricing-features i {
     color: var(--primary);
+    /* Pink checkmark */
+    font-size: 1.2rem;
+    filter: drop-shadow(0 0 5px var(--primary));
 }
 
 /* Testimonials Section */
@@ -662,11 +669,36 @@ ul {
     justify-content: space-between;
 }
 
+/* Testimonials - Jinx Style */
 .testimonial-text {
-    font-size: 1.1rem;
-    font-style: italic;
+    font-size: 1.2rem;
     margin-bottom: 2rem;
     line-height: 1.6;
+    color: var(--accent);
+    /* Cyan Neon */
+    font-family: 'Permanent Marker', cursive;
+    /* Handwritten */
+    font-weight: 400;
+    text-shadow: 0 0 3px rgba(0, 255, 255, 0.3);
+    background: transparent;
+    padding: 0;
+    border-left: none;
+    /* Removed clean border */
+    position: relative;
+    z-index: 1;
+}
+
+/* Quote icons decoration */
+.testimonial-text::before {
+    content: '"';
+    font-family: 'Rubik Glitch', cursive;
+    font-size: 4rem;
+    position: absolute;
+    top: -2rem;
+    left: -1rem;
+    color: var(--primary);
+    opacity: 0.2;
+    z-index: -1;
 }
 
 .testimonial-author {
@@ -676,26 +708,30 @@ ul {
 }
 
 .author-avatar {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     background: var(--primary);
-    border-radius: 50%;
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    /* Irregular blob */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    color: white;
+    font-size: 1.5rem;
+    color: #000;
+    box-shadow: 0 0 10px var(--primary);
 }
 
 .author-info h4 {
-    color: white;
-    font-size: 1rem;
+    color: var(--toxic);
+    font-size: 1.2rem;
     margin-bottom: 0.2rem;
+    font-family: 'Rubik Glitch', cursive;
 }
 
 .author-info span {
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-family: 'Permanent Marker', cursive;
 }
 
 /* Bookmakers Section */
