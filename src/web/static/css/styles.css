@@ -71,20 +71,22 @@ ul {
     list-style: none;
 }
 
-/* Graffiti Overlay - Chaos Elements */
+/* Graffiti Overlay - Hybrid (Sports + Jinx Chaos) */
 .background-glow {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: url("/static/img/scribbles.png");
-    background-size: 800px;
+    background: url("/static/img/scribbles_hybrid.png");
+    /* Hybrid: Balls + Lightning/Smiles */
+    background-size: 1000px;
+    /* Large size for less clutter */
     background-repeat: repeat;
     opacity: 0.15;
     z-index: -1;
     pointer-events: none;
-    mix-blend-mode: color-dodge;
+    mix-blend-mode: screen;
     animation: jitter-bg 0.2s infinite;
 }
 
