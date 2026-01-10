@@ -674,16 +674,14 @@ ul {
     font-size: 1.2rem;
     margin-bottom: 2rem;
     line-height: 1.6;
-    color: var(--accent);
-    /* Cyan Neon */
+    color: var(--primary);
+    /* Pink Jinx Tone */
     font-family: 'Permanent Marker', cursive;
-    /* Handwritten */
     font-weight: 400;
-    text-shadow: 0 0 3px rgba(0, 255, 255, 0.3);
+    text-shadow: 0 0 3px rgba(255, 0, 255, 0.4);
     background: transparent;
     padding: 0;
     border-left: none;
-    /* Removed clean border */
     position: relative;
     z-index: 1;
 }
@@ -696,7 +694,7 @@ ul {
     position: absolute;
     top: -2rem;
     left: -1rem;
-    color: var(--primary);
+    color: var(--accent);
     opacity: 0.2;
     z-index: -1;
 }
@@ -710,7 +708,7 @@ ul {
 .author-avatar {
     width: 60px;
     height: 60px;
-    background: var(--primary);
+    background: var(--accent);
     border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
     /* Irregular blob */
     display: flex;
@@ -718,20 +716,21 @@ ul {
     justify-content: center;
     font-size: 1.5rem;
     color: #000;
-    box-shadow: 0 0 10px var(--primary);
+    box-shadow: 0 0 10px var(--accent);
 }
 
 .author-info h4 {
-    color: var(--toxic);
+    color: #fff;
     font-size: 1.2rem;
     margin-bottom: 0.2rem;
-    font-family: 'Rubik Glitch', cursive;
+    font-family: 'Permanent Marker', cursive;
+    /* Readable */
 }
 
 .author-info span {
     color: var(--text-muted);
     font-size: 0.9rem;
-    font-family: 'Permanent Marker', cursive;
+    font-family: 'Outfit', sans-serif;
 }
 
 /* Bookmakers Section */
@@ -1081,9 +1080,11 @@ ul {
 
 .sub-body .amount {
     font-size: 2.8rem;
-    font-family: 'Rubik Glitch', cursive;
+    font-family: 'Permanent Marker', cursive;
+    /* Clearer price tag */
     color: var(--primary);
     text-shadow: 0 0 10px var(--primary);
+    font-weight: 400;
 }
 
 .sub-features {
