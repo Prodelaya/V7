@@ -402,18 +402,17 @@ ul {
     font-family: 'Permanent Marker', cursive;
     font-size: 3.5rem;
     margin-bottom: 5rem;
-    color: var(--primary);
-    /* Neon Pink */
-    text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
-    /* Neon Glow */
+    color: var(--accent);
+    /* Electric Blue/Cyan */
+    text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+    /* Blue Glow */
     text-align: center;
-    border-bottom: 3px solid var(--accent);
-    /* Cyan underline */
-    box-shadow: 0 10px 20px -10px var(--accent-glow);
+    border-bottom: 3px solid var(--primary);
+    /* Pink underline */
+    box-shadow: 0 10px 20px -10px var(--primary-glow);
     display: inline-block;
     padding: 0 2rem;
     background: transparent;
-    /* No black box */
     transform: rotate(-1deg);
 }
 
