@@ -167,12 +167,47 @@ ul {
 
 /* Hero Section */
 .hero {
-    height: 100vh;
+    min-height: 80vh;
     display: flex;
     align-items: center;
+    position: relative;
+    padding-top: var(--nav-height);
+    overflow: hidden;
+    /* Needed for bg logo */
+}
+
+.hero-bg-logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    z-index: -1;
+    opacity: 0.15;
+    pointer-events: none;
+    animation: rotate-slow 60s linear infinite;
+}
+
+.hero-bg-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@keyframes rotate-slow {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+.middle-center {
     justify-content: center;
     text-align: center;
-    padding-top: var(--nav-height);
 }
 
 .hero-title {

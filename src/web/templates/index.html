@@ -5,19 +5,24 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero middle-center">
+    <div class="hero-bg-logo">
+        <img src="/static/img/logo_v4.png" alt="">
+    </div>
     <div class="container hero-content text-center">
         <!-- Giant Brand Title -->
-        <h1 class="brand-title glitch" data-text="RETADOR">RETADOR</h1>
+        <h1 class="brand-title glitch" data-text="{{ t(request)('hero_title_brand') }}">{{
+            t(request)('hero_title_brand') }}</h1>
 
         <p class="hero-subtitle">
-            Pronósticos Deportivos Basados en <span class="highlight-text">Probabilidad y Estadística</span>.
+            {{ t(request)('hero_subtitle_start') }} <span class="highlight-text">{{
+                t(request)('hero_subtitle_highlight') }}</span>{{ t(request)('hero_subtitle_end') }}
         </p>
         <div class="hero-cta">
             <a href="https://t.me/RetadorBot" class="btn btn-lg btn-primary pulsate">
-                <i class="fa-brands fa-telegram"></i> Empezar Gratis
+                <i class="fa-brands fa-telegram"></i> {{ t(request)('cta_start') }}
             </a>
             <a href="#features" class="btn btn-lg btn-outline">
-                Saber más
+                {{ t(request)('cta_more') }}
             </a>
         </div>
     </div>
@@ -28,16 +33,16 @@
     <div class="container stats-grid">
         <div class="stat-item">
             <span class="stat-number">+15%</span>
-            <span class="stat-label">Yield Medio</span>
+            <span class="stat-label">{{ t(request)('stats_yield') }}</span>
         </div>
         <div class="stat-item">
             <span class="stat-number">24/7</span>
-            <span class="stat-label">Monitoreo</span>
+            <span class="stat-label">{{ t(request)('stats_monitoring') }}</span>
         </div>
         <div class="stat-item">
             <span class="stat-number">
                 < 500ms</span>
-                    <span class="stat-label">Latencia</span>
+                    <span class="stat-label">{{ t(request)('stats_latency') }}</span>
         </div>
     </div>
 </section>
@@ -45,16 +50,15 @@
 <!-- Features Section -->
 <section id="features" class="features section-padding">
     <div class="container">
-        <h2 class="section-title text-center">¿Por qué Retador?</h2>
+        <h2 class="section-title text-center">{{ t(request)('features_title') }}</h2>
         <div class="feature-grid">
             <!-- Feature 1 -->
             <div class="feature-card glass-panel">
                 <div class="feature-icon">
                     <i class="fa-solid fa-crosshairs"></i>
                 </div>
-                <h3>Pinnacle como Referencia</h3>
-                <p>Usamos las cuotas de Pinnacle (la casa más "sharp") para validar el valor real de cada pronóstico
-                    estadístico.</p>
+                <h3>{{ t(request)('feature_1_title') }}</h3>
+                <p>{{ t(request)('feature_1_desc') }}</p>
             </div>
 
             <!-- Feature 2 -->
@@ -62,8 +66,8 @@
                 <div class="feature-icon">
                     <i class="fa-solid fa-link"></i>
                 </div>
-                <h3>Link Directo al Partido</h3>
-                <p>Garantizamos velocidad. Un clic y accedes directamente al evento. Sin búsquedas manuales.</p>
+                <h3>{{ t(request)('feature_2_title') }}</h3>
+                <p>{{ t(request)('feature_2_desc') }}</p>
             </div>
 
             <!-- Feature 3 -->
@@ -71,8 +75,8 @@
                 <div class="feature-icon">
                     <i class="fa-solid fa-bolt"></i>
                 </div>
-                <h3>Telegram Instantáneo</h3>
-                <p>Recibe la alerta en el momento exacto. Un clic y estás dentro de la apuesta.</p>
+                <h3>{{ t(request)('feature_3_title') }}</h3>
+                <p>{{ t(request)('feature_3_desc') }}</p>
             </div>
 
             <!-- Feature 4 -->
@@ -80,8 +84,8 @@
                 <div class="feature-icon">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <h3>Validación Inteligente</h3>
-                <p>Filtramos errores de cuotas y falsos positivos para proteger tu bankroll.</p>
+                <h3>{{ t(request)('feature_4_title') }}</h3>
+                <p>{{ t(request)('feature_4_desc') }}</p>
             </div>
         </div>
     </div>
@@ -90,8 +94,8 @@
 <!-- Subscriptions Section -->
 <section id="subscriptions" class="subscriptions section-padding">
     <div class="container">
-        <h2 class="section-title text-center">Suscripciones Disponibles</h2>
-        <p class="section-subtitle text-center mb-5">Elige tu casa de apuestas favorita. Sin packs, sin ataduras.</p>
+        <h2 class="section-title text-center">{{ t(request)('subscriptions_title') }}</h2>
+        <p class="section-subtitle text-center mb-5">{{ t(request)('subscriptions_subtitle') }}</p>
 
         <div class="subscription-grid">
             <!-- Bet365 -->
@@ -102,17 +106,17 @@
                     <div class="bookie-fallback css-logo bet365">bet365</div>
                 </div>
                 <div class="sub-body">
-                    <h3>Suscripción Bet365</h3>
+                    <h3>{{ t(request)('sub_bet365_title') }}</h3>
                     <div class="price">
                         <span class="amount">159.99€</span>
                         <span class="period">/mes</span>
                     </div>
                     <ul class="sub-features">
-                        <li><i class="fa-solid fa-check"></i> Picks exclusivos Bet365</li>
-                        <li><i class="fa-solid fa-check"></i> Validación Pinnacle</li>
-                        <li><i class="fa-solid fa-check"></i> Link directo al cupón</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_exclusive') }} Bet365</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_validation') }}</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_direct_link') }}</li>
                     </ul>
-                    <a href="https://t.me/RetadorBot" class="btn btn-primary w-100">Suscribirme</a>
+                    <a href="https://t.me/RetadorBot" class="btn btn-primary w-100">{{ t(request)('sub_cta') }}</a>
                 </div>
             </div>
 
@@ -124,17 +128,17 @@
                     <div class="bookie-fallback css-logo sportium">Sportium</div>
                 </div>
                 <div class="sub-body">
-                    <h3>Suscripción Sportium</h3>
+                    <h3>{{ t(request)('sub_sportium_title') }}</h3>
                     <div class="price">
                         <span class="amount">159.99€</span>
                         <span class="period">/mes</span>
                     </div>
                     <ul class="sub-features">
-                        <li><i class="fa-solid fa-check"></i> Picks exclusivos Sportium</li>
-                        <li><i class="fa-solid fa-check"></i> Alta liquidez</li>
-                        <li><i class="fa-solid fa-check"></i> Link directo al evento</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_exclusive') }} Sportium</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_liquidity') }}</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_event_link') }}</li>
                     </ul>
-                    <a href="https://t.me/RetadorBot" class="btn btn-primary w-100">Suscribirme</a>
+                    <a href="https://t.me/RetadorBot" class="btn btn-primary w-100">{{ t(request)('sub_cta') }}</a>
                 </div>
             </div>
 
@@ -146,35 +150,34 @@
                     <div class="bookie-fallback css-logo winamax">Winamax</div>
                 </div>
                 <div class="sub-body">
-                    <h3>Suscripción Winamax</h3>
+                    <h3>{{ t(request)('sub_winamax_title') }}</h3>
                     <div class="price">
                         <span class="amount">159.99€</span>
                         <span class="period">/mes</span>
                     </div>
                     <ul class="sub-features">
-                        <li><i class="fa-solid fa-check"></i> Picks exclusivos Winamax</li>
-                        <li><i class="fa-solid fa-check"></i> Margen competitivo</li>
-                        <li><i class="fa-solid fa-check"></i> Link directo</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_exclusive') }} Winamax</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_margin') }}</li>
+                        <li><i class="fa-solid fa-check"></i> {{ t(request)('sub_feature_direct_link') }}</li>
                     </ul>
-                    <a href="https://t.me/RetadorBot" class="btn btn-primary w-100">Suscribirme</a>
+                    <a href="https://t.me/RetadorBot" class="btn btn-primary w-100">{{ t(request)('sub_cta') }}</a>
                 </div>
             </div>
         </div>
 
         <div class="supported-bookies mt-5 text-center">
-            <h4 class="mb-4 text-muted">También compatibles</h4>
+            <h4 class="mb-4 text-muted">{{ t(request)('other_bookies_title') }}</h4>
             <div class="bookie-logos-row">
                 <!-- Images handled by CSS filter: grayscale(1) -> grayscale(0) on hover -->
                 <img src="/static/img/codere.png" alt="Codere" class="secondary-bookie">
                 <img src="/static/img/bwin.png" alt="Bwin" class="secondary-bookie">
                 <img src="/static/img/yaass.png" alt="Yaass" class="secondary-bookie">
-                <!-- Fallback chips for others -->
-                <span class="badge-glass">Versus</span>
-                <span class="badge-glass">Pokerstars</span>
-                <span class="badge-glass">Retabet</span>
+                <img src="/static/img/versus.png" alt="Versus" class="secondary-bookie">
+                <img src="/static/img/pokerstars.png" alt="Pokerstars" class="secondary-bookie">
+                <img src="/static/img/retabet.png" alt="Retabet" class="secondary-bookie">
             </div>
-            <p class="cta-text mt-4 text-muted small">¿No ves tu casa? <a href="#" class="text-primary">Contáctanos</a>
-            </p>
+            <p class="cta-text mt-4 text-muted small">{{ t(request)('other_bookies_cta') }} <a href="#"
+                    class="text-primary">{{ t(request)('other_bookies_contact') }}</a></p>
         </div>
     </div>
 </section>

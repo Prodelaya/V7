@@ -1,10 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from pathlib import Path
 import uvicorn
 
 from src.web.routes import pages
+from src.web.i18n import get_translation
 
 # Configuración básica
 BASE_DIR = Path(__file__).resolve().parent

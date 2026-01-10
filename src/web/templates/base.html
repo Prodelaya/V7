@@ -40,18 +40,19 @@
                 <!-- Language Selector Dropdown -->
                 <div class="lang-dropdown">
                     <button class="lang-btn">
-                        <span class="flag">🇪🇸</span> <i class="fa-solid fa-chevron-down"></i>
+                        <span class="flag">{% if current_lang(request) == 'es' %}🇪🇸{% else %}🇬🇧{% endif %}</span> <i
+                            class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="lang-content">
-                        <a href="#"><span class="flag">🇪🇸</span> Español</a>
-                        <a href="#"><span class="flag">🇬🇧</span> English</a>
+                        <a href="/set_language/es"><span class="flag">🇪🇸</span> Español</a>
+                        <a href="/set_language/en"><span class="flag">🇬🇧</span> English</a>
                     </div>
                 </div>
             </nav>
 
             <div class="nav-actions">
                 <a href="https://t.me/RetadorBot" target="_blank" class="btn btn-primary">
-                    <i class="fa-brands fa-telegram"></i> Abrir Bot
+                    <i class="fa-brands fa-telegram"></i> {{ t(request)('cta_start') }}
                 </a>
             </div>
         </div>
