@@ -634,9 +634,89 @@ ul {
     color: var(--primary);
 }
 
-/* Responsive Adjustments */
-@media (max-width: 1024px) {
-    .pricing-card.popular {
-        transform: scale(1);
-    }
+/* Subscription Grid */
+.subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.subscription-card {
+    padding: 0;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.subscription-card:hover {
+    transform: translateY(-5px);
+}
+
+.sub-header {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.bookie-img {
+    max-height: 80px;
+    max-width: 80%;
+    object-fit: contain;
+}
+
+.bookie-fallback {
+    display: none;
+    /* Only shows if img fails loading */
+    width: 80%;
+}
+
+.sub-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.sub-body h3 {
+    color: white;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+}
+
+.sub-body .price {
+    margin-bottom: 1.5rem;
+}
+
+.sub-body .amount {
+    font-size: 2.5rem;
+    color: var(--primary);
+}
+
+.sub-features {
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+.sub-features li {
+    margin-bottom: 0.8rem;
+    color: var(--text-muted);
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+/* Background hints for cards */
+.bet365-bg {
+    background: radial-gradient(circle, rgba(12, 110, 78, 0.3) 0%, transparent 70%);
+}
+
+.sportium-bg {
+    background: radial-gradient(circle, rgba(227, 6, 19, 0.2) 0%, transparent 70%);
+}
+
+.winamax-bg {
+    background: radial-gradient(circle, rgba(199, 38, 38, 0.2) 0%, transparent 70%);
 }
