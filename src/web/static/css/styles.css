@@ -686,6 +686,21 @@ ul {
     z-index: 1;
 }
 
+/* DESCRIPTION TEXT - "Usamos las cuotas..." */
+.feature-card p {
+    color: var(--primary);
+    /* Pink Jinx Tone */
+    font-family: 'Permanent Marker', cursive;
+    /* Handwriting style */
+    font-size: 1.2rem;
+    line-height: 1.4;
+    text-shadow: 0 0 3px rgba(255, 0, 255, 0.4);
+    /* Pink Glow */
+    letter-spacing: 0.5px;
+    margin-top: 1rem;
+    opacity: 0.9;
+}
+
 /* Quote icons decoration */
 .testimonial-text::before {
     content: '"';
