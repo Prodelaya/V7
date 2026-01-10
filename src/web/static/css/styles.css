@@ -723,8 +723,9 @@ ul {
 }
 
 .secondary-bookie {
-    height: 40px;
-    opacity: 0.6;
+    height: 50px;
+    /* Bigger */
+    opacity: 0.8;
     filter: grayscale(100%);
     transition: all 0.3s ease;
 }
@@ -732,7 +733,7 @@ ul {
 .secondary-bookie:hover {
     opacity: 1;
     filter: grayscale(0%);
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 /* Brand Title (Hero) */
