@@ -1,20 +1,24 @@
 """Opposite market service for rebote detection.
 
-Implementation Requirements:
-- Map each market to its opposite(s)
-- Used to prevent sending both sides of same bet
-- Generate opposite Redis keys for deduplication
+Service for resolving opposite betting markets and generating Redis keys
+for deduplication. Provides a string-based interface that delegates to
+the MarketType enum for the actual opposite market lookup.
+
+Implementation Notes:
+- Wraps MarketType.get_opposites() with a string-based interface
+- Used by code that doesn't work directly with MarketType enum
+- Consistent with legacy get_market_opposites() interface
 
 Reference:
 - docs/04-Structure.md: "domain/services/"
 - docs/05-Implementation.md: Task 6.3
 - docs/01-SRS.md: RF-004, Appendix 6.1
 - legacy/RetadorV6.py: opposite_markets (line 880), get_market_opposites (line 1029)
-
-TODO: Implement OppositeMarketService
 """
 
 from typing import List
+
+from ..value_objects.market_type import MarketType
 
 
 class OppositeMarketService:
@@ -23,6 +27,9 @@ class OppositeMarketService:
 
     Used to detect "rebotes" (bounces) where the opposite market
     was already sent, indicating odds movement we should avoid.
+
+    This service provides a string-based interface for opposite market
+    resolution, delegating to MarketType.get_opposites() internally.
 
     Opposite markets (from docs/01-SRS.md Appendix 6.1):
         | Market   | Opposite(s)     |
@@ -34,58 +41,55 @@ class OppositeMarketService:
         | yes      | no              |
         | _1x      | _x2, _12        |
 
-    TODO: Implement based on:
-    - Task 6.3 in docs/05-Implementation.md
-    - Appendix 6.1 in docs/01-SRS.md
-    - get_market_opposites() in legacy/RetadorV6.py (line 1029)
+    Example:
+        >>> service = OppositeMarketService()
+        >>> service.get_opposites("over")
+        ['under']
+        >>> service.get_opposites("_1x")
+        ['_x2', '_12']
+        >>> service.get_opposite_keys("TeamA:TeamB:1234567890:2.5", "over", "bookie")
+        ['TeamA:TeamB:1234567890:2.5:under:bookie']
     """
-
-    # Mapping from market type to its opposites
-    # Reference: legacy/RetadorV6.py line 880
-    OPPOSITE_MARKETS = {
-        "ah1": "ah2",
-        "ah2": "ah1",
-        "win1": "win2",
-        "win2": "win1",
-        "winonly1": "winonly2",
-        "winonly2": "winonly1",
-        "win1retx": "win2retx",
-        "win2retx": "win1retx",
-        "over": "under",
-        "under": "over",
-        "eover": "e_under",
-        "e_under": "eover",
-        "even": "odd",
-        "odd": "even",
-        "win1tonil": "win2tonil",
-        "win2tonil": "win1tonil",
-        "clean_sheet_1": "clean_sheet_2",
-        "clean_sheet_2": "clean_sheet_1",
-        "_1x": ["_x2", "_12"],
-        "_x2": ["_1x", "_12"],
-        "_12": ["_1x", "_x2"],
-        "win1 qualify": "win2 qualify",
-        "BETWEENMARGINH1": "BETWEENMARGINH2",
-    }
 
     def get_opposites(self, market_type: str) -> List[str]:
         """
         Get opposite market types for a given market.
 
+        Converts the string to MarketType enum and delegates to
+        MarketType.get_opposites(). Case-insensitive.
+
         Args:
-            market_type: Market type string (e.g., "over", "win1")
+            market_type: Market type string (e.g., "over", "win1", "OVER")
 
         Returns:
-            List of opposite market type strings
+            List of opposite market type strings.
+            Empty list if market has no opposites or is unknown.
 
-        Example:
+        Examples:
             >>> service = OppositeMarketService()
             >>> service.get_opposites("over")
-            ["under"]
+            ['under']
+            >>> service.get_opposites("win1")
+            ['win2']
             >>> service.get_opposites("_1x")
-            ["_x2", "_12"]
+            ['_x2', '_12']
+            >>> service.get_opposites("draw")  # No opposite
+            []
+            >>> service.get_opposites("unknown_xyz")  # Unknown market
+            []
+
+        Reference:
+            - MarketType.get_opposites() in domain/value_objects/market_type.py
+            - get_market_opposites() in legacy/RetadorV6.py (line 1029)
         """
-        raise NotImplementedError("OppositeMarketService.get_opposites not implemented")
+        # Convert string to MarketType enum (non-strict: unknown → UNKNOWN)
+        market_enum = MarketType.from_string(market_type, strict=False)
+
+        # Get opposites as enum list
+        opposite_enums = market_enum.get_opposites()
+
+        # Convert back to strings
+        return [opp.value for opp in opposite_enums]
 
     def get_opposite_keys(
         self, base_key: str, market_type: str, bookmaker: str
@@ -93,18 +97,35 @@ class OppositeMarketService:
         """
         Generate Redis keys for opposite markets.
 
-        Used to check if opposite market was already sent.
+        Used to check if opposite market was already sent (rebote detection).
+        The base_key should contain everything except market and bookmaker.
 
         Args:
-            base_key: Base key without market (team1:team2:timestamp)
-            market_type: Current market type
-            bookmaker: Target bookmaker
+            base_key: Base key (team1:team2:timestamp:variety) - without market/bookie
+            market_type: Current market type (e.g., "over", "win1")
+            bookmaker: Target bookmaker identifier
 
         Returns:
-            List of Redis keys for opposite markets
+            List of Redis keys for opposite markets.
+            Empty list if market has no opposites.
 
-        Reference: _get_opposite_keys() in legacy/RetadorV6.py (line 1053)
+        Key format: {base_key}:{opposite_market}:{bookmaker}
+
+        Examples:
+            >>> service = OppositeMarketService()
+            >>> service.get_opposite_keys("TeamA:TeamB:1234567890:2.5", "over", "bookie")
+            ['TeamA:TeamB:1234567890:2.5:under:bookie']
+            >>> service.get_opposite_keys("TeamA:TeamB:1234567890:", "_1x", "pinnacle")
+            ['TeamA:TeamB:1234567890::_x2:pinnacle', 'TeamA:TeamB:1234567890::_12:pinnacle']
+
+        Reference:
+            - _get_opposite_keys() in legacy/RetadorV6.py (line 1053)
+            - Pick.get_opposite_keys() in domain/entities/pick.py
         """
-        raise NotImplementedError(
-            "OppositeMarketService.get_opposite_keys not implemented"
-        )
+        opposite_types = self.get_opposites(market_type)
+
+        if not opposite_types:
+            return []
+
+        # Generate keys: base_key + opposite_market + bookmaker
+        return [f"{base_key}:{opp}:{bookmaker}" for opp in opposite_types]
