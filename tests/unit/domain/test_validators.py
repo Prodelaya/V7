@@ -844,3 +844,204 @@ class TestValidationChainEdgeCases:
         surebet = _create_surebet_with_future_event(5.0)
         result = await chain.validate(surebet)
         assert result.is_valid is True
+
+
+# =============================================================================
+# Tests for DuplicateValidator (Task 6.2)
+# =============================================================================
+
+
+class MockRepository:
+    """Mock repository for testing DuplicateValidator."""
+
+    def __init__(
+        self,
+        exists_returns: bool = False,
+        exists_any_returns: bool = False,
+        raise_on_exists: bool = False,
+        raise_on_exists_any: bool = False,
+    ):
+        self.exists_returns = exists_returns
+        self.exists_any_returns = exists_any_returns
+        self.raise_on_exists = raise_on_exists
+        self.raise_on_exists_any = raise_on_exists_any
+        self.exists_calls = []
+        self.exists_any_calls = []
+
+    async def exists(self, key: str) -> bool:
+        self.exists_calls.append(key)
+        if self.raise_on_exists:
+            raise Exception("Redis connection error")
+        return self.exists_returns
+
+    async def exists_any(self, keys: list) -> bool:
+        self.exists_any_calls.append(keys)
+        if self.raise_on_exists_any:
+            raise Exception("Redis connection error")
+        return self.exists_any_returns
+
+
+def _create_pick_for_duplicate_test(
+    market_type: MarketType = MarketType.OVER,
+    variety: str = "2.5",
+) -> Pick:
+    """Helper to create Pick for duplicate validation testing."""
+    return Pick(
+        teams=("Team A", "Team B"),
+        odds=Odds(2.00),
+        market_type=market_type,
+        variety=variety,
+        event_time=datetime.now(timezone.utc) + timedelta(hours=1),
+        bookmaker="test_bookie",
+    )
+
+
+class TestDuplicateValidator:
+    """Tests for DuplicateValidator (Task 6.2).
+
+    Validates duplicate/rebote detection using mock repository.
+    """
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        from src.domain.rules.validators.duplicate_validator import DuplicateValidator
+        self.DuplicateValidator = DuplicateValidator
+
+    # -------------------------------------------------------------------------
+    # Constructor and Name Tests
+    # -------------------------------------------------------------------------
+
+    def test_constructor_stores_repository(self):
+        """Repository should be stored in instance."""
+        repo = MockRepository()
+        validator = self.DuplicateValidator(repo)
+        assert validator._repository is repo
+
+    def test_name_property(self):
+        """Validator name should be 'DuplicateValidator'."""
+        repo = MockRepository()
+        validator = self.DuplicateValidator(repo)
+        assert validator.name == "DuplicateValidator"
+
+    # -------------------------------------------------------------------------
+    # Validation - Pass Cases
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_new_pick_passes_validation(self):
+        """Pick not in Redis should pass validation."""
+        repo = MockRepository(exists_returns=False, exists_any_returns=False)
+        validator = self.DuplicateValidator(repo)
+        pick = _create_pick_for_duplicate_test()
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is True
+        assert result.error_message is None
+        assert len(repo.exists_calls) == 1
+        assert len(repo.exists_any_calls) == 1  # Should check opposites too
+
+    @pytest.mark.asyncio
+    async def test_no_opposite_keys_skips_exists_any_check(self):
+        """Market without opposites should only check main key."""
+        repo = MockRepository(exists_returns=False, exists_any_returns=False)
+        validator = self.DuplicateValidator(repo)
+        # UNKNOWN market type has no opposites
+        pick = _create_pick_for_duplicate_test(market_type=MarketType.UNKNOWN)
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is True
+        assert len(repo.exists_calls) == 1
+        assert len(repo.exists_any_calls) == 0  # No opposites to check
+
+    # -------------------------------------------------------------------------
+    # Validation - Fail Cases (Duplicate & Rebote)
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_exact_duplicate_fails(self):
+        """Pick that already exists in Redis should fail."""
+        repo = MockRepository(exists_returns=True, exists_any_returns=False)
+        validator = self.DuplicateValidator(repo)
+        pick = _create_pick_for_duplicate_test()
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is False
+        assert "already sent" in result.error_message.lower()
+        assert len(repo.exists_calls) == 1
+        assert len(repo.exists_any_calls) == 0  # Fail-fast: didn't check opposites
+
+    @pytest.mark.asyncio
+    async def test_opposite_market_fails_rebote(self):
+        """Pick with opposite market in Redis should fail (rebote)."""
+        repo = MockRepository(exists_returns=False, exists_any_returns=True)
+        validator = self.DuplicateValidator(repo)
+        pick = _create_pick_for_duplicate_test(market_type=MarketType.OVER)
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is False
+        assert "rebote" in result.error_message.lower()
+        assert len(repo.exists_calls) == 1
+        assert len(repo.exists_any_calls) == 1
+
+    # -------------------------------------------------------------------------
+    # Error Handling - Redis Failures
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_redis_error_on_exists_fails_safely(self):
+        """Redis error during exists() should fail validation."""
+        repo = MockRepository(raise_on_exists=True)
+        validator = self.DuplicateValidator(repo)
+        pick = _create_pick_for_duplicate_test()
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is False
+        assert "redis error" in result.error_message.lower()
+
+    @pytest.mark.asyncio
+    async def test_redis_error_on_exists_any_fails_safely(self):
+        """Redis error during exists_any() should fail validation."""
+        repo = MockRepository(exists_returns=False, raise_on_exists_any=True)
+        validator = self.DuplicateValidator(repo)
+        pick = _create_pick_for_duplicate_test()
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is False
+        assert "redis error" in result.error_message.lower()
+
+    # -------------------------------------------------------------------------
+    # Error Message Format Tests
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_error_message_for_duplicate_includes_key(self):
+        """Duplicate error message should include part of the key."""
+        repo = MockRepository(exists_returns=True)
+        validator = self.DuplicateValidator(repo)
+        pick = _create_pick_for_duplicate_test()
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is False
+        # Key starts with team names
+        assert "Team A" in result.error_message or "pick" in result.error_message.lower()
+
+    @pytest.mark.asyncio
+    async def test_error_message_for_rebote_is_descriptive(self):
+        """Rebote error message should clearly indicate the issue."""
+        repo = MockRepository(exists_returns=False, exists_any_returns=True)
+        validator = self.DuplicateValidator(repo)
+        pick = _create_pick_for_duplicate_test()
+
+        result = await validator.validate(pick)
+
+        assert result.is_valid is False
+        assert "opposite" in result.error_message.lower()
+        assert "rebote" in result.error_message.lower()
+
