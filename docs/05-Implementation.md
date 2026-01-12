@@ -443,8 +443,8 @@ async def process_batch(self, raw_picks: List[dict]) -> int:
 
 ### Checklist Fase 6
 - [x] 6.1 PickDTO (Hybrid Approach: delegates to Surebet, adds app-layer validation, 22 tests, 98% coverage)
-- [ ] 6.2 DuplicateValidator
-- [ ] 6.3 OppositeMarketService
+- [x] 6.2 DuplicateValidator (Redis-based duplicate and rebote detection, Pick.get_opposite_keys(), 18 tests)
+- [x] 6.3 OppositeMarketService (string-based wrapper delegating to MarketType.get_opposites(), 34 tests, 100% coverage)
 - [ ] 6.4 PickHandler
 - [ ] 6.5 Tests Handler
 
@@ -518,10 +518,10 @@ Fase 4:  Config         [████] 100%  (4/4: Settings + BookmakerConfig + 
 Fase 5A: Redis          [████] 100%  (3/3: BaseRepository + RedisRepository + Tests)
 Fase 5B: API Client     [████] 100%  (3/3: AdaptiveRateLimiter + SurebetClient + Tests)
 Fase 5C: Messaging      [████] 100%  (5/5: MessageFormatter + _adjust_domain + TelegramGateway + Tests + LocalCache)
-Fase 6:  Application    [█___] 20%   (1/5: PickDTO ✓)
+Fase 6:  Application    [███_] 60%   (3/5: PickDTO ✓, DuplicateValidator ✓, OppositeMarketService ✓)
 Fase 7:  Integración    [____] 0%
 
-Total: 45/56 tareas completadas (80%)
+Total: 47/56 tareas completadas (84%)
 ```
 
 ---

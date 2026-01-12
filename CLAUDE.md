@@ -104,7 +104,7 @@ min_odds = 1 / (1.01 - 1/odd_pinnacle)  # Exact cutoff at -1% profit
 
 ## Implementation Status
 
-**Current State**: Phase 6 (Application Layer) at 20% - PickDTO complete, PickHandler pending.
+**Current State**: Phase 6 (Application Layer) at 60% - PickDTO, DuplicateValidator, OppositeMarketService complete.
 
 ```
 Fase 0:  Setup          [████] 100%
@@ -115,15 +115,15 @@ Fase 4:  Config         [████] 100%  (4/4: 108 tests)
 Fase 5A: Redis          [████] 100%  (3/3: 26 tests)
 Fase 5B: API Client     [████] 100%  (3/3: 36 tests)
 Fase 5C: Messaging      [████] 100%  (5/5: 31 tests)
-Fase 6:  Application    [█___] 20%   (1/5: PickDTO ✓)
+Fase 6:  Application    [███_] 60%   (3/5: PickDTO ✓, DuplicateValidator ✓, OppositeMarketService ✓)
 Fase 7:  Integración    [____] 0%
 
-Total: 45/56 tareas completadas (80%)
+Total: 47/56 tareas completadas (84%)
 ```
 
 **Next tasks** (Fase 6):
-- [ ] 6.2 DuplicateValidator
-- [ ] 6.3 OppositeMarketService  
+- [x] 6.2 DuplicateValidator
+- [x] 6.3 OppositeMarketService  
 - [ ] 6.4 PickHandler
 - [ ] 6.5 Tests Handler
 
