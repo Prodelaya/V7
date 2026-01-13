@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Retador v2.0** is a professional betting value detection system that identifies arbitrage opportunities between sharp bookmakers (Pinnacle) and soft bookmakers, then distributes picks to professional bettors via Telegram.
 
-- **Language**: Python 3.10+ (compatible with 3.10, 3.11, 3.12)
+- **Language**: Python 3.11+ (compatible with 3.11, 3.12, 3.13)
 - **Type**: Async application (asyncio)
-- **Status**: **88% implemented** (49/56 tasks complete) - Phase 7 (Integration) pending
+- **Status**: **89% implemented** (50/56 tasks complete) - Phase 7 (Integration) in progress
 
 ## Build & Development Commands
 
@@ -116,16 +116,15 @@ Fase 5A: Redis          [████] 100%  (3/3: 26 tests)
 Fase 5B: API Client     [████] 100%  (3/3: 36 tests)
 Fase 5C: Messaging      [████] 100%  (5/5: 31 tests)
 Fase 6:  Application    [████] 100%  (5/5: PickDTO, DuplicateValidator, OppositeMarketService, PickHandler, Tests)
-Fase 7:  Integración    [____] 0%
+Fase 7:  Integración    [█___] 17%   (1/6: main.py complete)
 
-Total: 49/56 tareas completadas (88%)
+Total: 50/56 tareas completadas (89%)
 ```
 
-**Next tasks** (Fase 6):
-- [x] 6.2 DuplicateValidator
-- [x] 6.3 OppositeMarketService  
-- [x] 6.4 PickHandler
-- [x] 6.5 Tests Handler
+**Next tasks** (Fase 7):
+- [x] 7.1 main.py (scripts/run.py)
+- [ ] 7.2 Test E2E
+- [ ] 7.3 Paralelo con V6
 
 **See** `docs/05-Implementation.md` for detailed task breakdown.
 

@@ -498,7 +498,7 @@ async def main():
 ```
 
 ### Checklist Fase 7
-- [ ] 7.1 main.py
+- [x] 7.1 main.py (scripts/run.py with init_components, run_main_loop, graceful shutdown)
 - [ ] 7.2 Test E2E
 - [ ] 7.3 Paralelo con V6
 - [ ] 7.4 Latencia OK
@@ -519,9 +519,9 @@ Fase 5A: Redis          [████] 100%  (3/3: BaseRepository + RedisReposit
 Fase 5B: API Client     [████] 100%  (3/3: AdaptiveRateLimiter + SurebetClient + Tests)
 Fase 5C: Messaging      [████] 100%  (5/5: MessageFormatter + _adjust_domain + TelegramGateway + Tests + LocalCache)
 Fase 6:  Application    [████] 100%  (5/5: PickDTO ✓, DuplicateValidator ✓, OppositeMarketService ✓, PickHandler ✓, Tests Handler ✓)
-Fase 7:  Integración    [____] 0%
+Fase 7:  Integración    [█___] 17%   (1/6: main.py ✓)
 
-Total: 49/56 tareas completadas (88%)
+Total: 50/56 tareas completadas (89%)
 ```
 
 ---
