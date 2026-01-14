@@ -123,7 +123,7 @@ Total: 50/56 tareas completadas (89%)
 
 **Next tasks** (Fase 7):
 - [x] 7.1 main.py (scripts/run.py)
-- [ ] 7.2 Test E2E
+- [x] 7.2 Test E2E
 - [ ] 7.3 Paralelo con V6
 
 **See** `docs/05-Implementation.md` for detailed task breakdown.
