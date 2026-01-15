@@ -102,3 +102,4 @@ venv/
 wheels/
 bot_data.db
 .env
+*_log.txt
