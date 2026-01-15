@@ -1,7 +1,7 @@
 
 TRANSLATIONS = {
     "es": {
-        "hero_title_brand": "RETADOR",
+        "hero_title_brand": "STREET VALUE",
         "hero_subtitle_start": "Pronósticos Deportivos Basados en",
         "hero_subtitle_highlight": "Probabilidad y Estadística",
         "hero_subtitle_end": ".",
@@ -10,7 +10,7 @@ TRANSLATIONS = {
         "stats_yield": "Yield Medio",
         "stats_monitoring": "Monitoreo",
         "stats_latency": "Latencia",
-        "features_title": "¿Por qué Retador?",
+        "features_title": "¿Por qué Street Value?",
         "feature_1_title": "Pinnacle como Referencia",
         "feature_1_desc": "Usamos las cuotas de Pinnacle (la casa más \"sharp\") para validar el valor real de cada pronóstico estadístico.",
         "feature_2_title": "Link Directo al Partido",
@@ -42,7 +42,7 @@ TRANSLATIONS = {
         "footer_rights": "Todos los derechos reservados."
     },
     "en": {
-        "hero_title_brand": "RETADOR",
+        "hero_title_brand": "STREET VALUE",
         "hero_subtitle_start": "Sports Predictions Based on",
         "hero_subtitle_highlight": "Probability and Statistics",
         "hero_subtitle_end": ".",
@@ -51,7 +51,7 @@ TRANSLATIONS = {
         "stats_yield": "Average Yield",
         "stats_monitoring": "Monitoring",
         "stats_latency": "Latency",
-        "features_title": "Why Retador?",
+        "features_title": "Why Street Value?",
         "feature_1_title": "Pinnacle as Benchmark",
         "feature_1_desc": "We use Pinnacle odds (the sharpest bookie) to validate the real value of each statistical prediction.",
         "feature_2_title": "Direct Match Link",

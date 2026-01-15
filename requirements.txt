@@ -26,3 +26,5 @@ pydantic-settings>=2.0.0
 fastapi
 uvicorn
 jinja2
+python-telegram-bot==20.7
+aiosqlite

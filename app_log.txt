@@ -1,0 +1,58 @@
+nohup: ignoring input
+INFO:     Will watch for changes in these directories: ['/home/yorerm/V7']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [5971] using StatReload
+INFO:     Started server process [5974]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:34730 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38958 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38958 - "GET /static/img/scribbles_hybrid.png HTTP/1.1" 304 Not Modified
+WARNING:  StatReload detected changes in 'src/bot/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [5974]
+INFO:     Started server process [11198]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/bot/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11198]
+INFO:     Started server process [13800]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/infrastructure/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13800]
+INFO:     Started server process [17711]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'generate_gif.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [17711]
+INFO:     Started server process [17843]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/bot/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [17843]
+INFO:     Started server process [18168]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/bot/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [18168]
+INFO:     Started server process [22255]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

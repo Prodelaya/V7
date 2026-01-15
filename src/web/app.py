@@ -12,7 +12,7 @@ from src.web.i18n import get_translation
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(
-    title="Retador v2.0",
+    title="Street Value v2.0",
     description="Sistema profesional de Value Betting",
     version="2.0.0",
     docs_url=None,  # Desactivar docs en prod por seguridad/privacidad
