@@ -1,12 +1,14 @@
 from PIL import Image
+from pathlib import Path
 
 def create_profile_pic():
     # 1. Config
     size = (1000, 1000)
     # No external BG image, just solid color
     bg_color = (10, 10, 10, 255) # Almost black
-    logo_path = "/home/yorerm/V7/src/web/static/img/logo_sketchy.png"
-    output_path = "/home/yorerm/V7/src/web/static/img/retador_telegram_profile.png"
+    base_dir = Path(__file__).parent.parent
+    logo_path = base_dir / "src/web/static/img/logo_sketchy.png"
+    output_path = base_dir / "src/web/static/img/retador_telegram_profile.png"
 
     # 2. Create Solid Background
     bg = Image.new("RGBA", size, bg_color)

@@ -1,7 +1,7 @@
 
 from PIL import Image, ImageChops, ImageEnhance
+from pathlib import Path
 import random
-import os
 
 def create_glitch_gif(input_path, output_path, frames=10):
     """Generates a glitchy GIF from an input image."""
@@ -65,4 +65,8 @@ def create_glitch_gif(input_path, output_path, frames=10):
         return False
 
 if __name__ == "__main__":
-    create_glitch_gif("src/bot/media/logo.png", "src/bot/media/welcome_glitch.gif")
+    base_dir = Path(__file__).parent.parent
+    create_glitch_gif(
+        str(base_dir / "src/bot/media/logo.png"),
+        str(base_dir / "src/bot/media/welcome_glitch.gif")
+    )

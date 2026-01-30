@@ -1,9 +1,11 @@
 from PIL import Image
+from pathlib import Path
 
 def create_favicon():
-    logo_path = "/home/yorerm/V7/src/web/static/img/logo_sketchy.png"
-    output_path = "/home/yorerm/V7/src/web/static/favicon.ico"
-    output_png_path = "/home/yorerm/V7/src/web/static/img/favicon.png"
+    base_dir = Path(__file__).parent.parent
+    logo_path = base_dir / "src/web/static/img/logo_sketchy.png"
+    output_path = base_dir / "src/web/static/favicon.ico"
+    output_png_path = base_dir / "src/web/static/img/favicon.png"
 
     try:
         img = Image.open(logo_path).convert("RGBA")
