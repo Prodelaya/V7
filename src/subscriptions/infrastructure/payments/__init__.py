@@ -12,7 +12,9 @@
 #   from subscriptions.infrastructure.payments import GatewayFactory
 #   gateway = GatewayFactory.create('stripe')
 
-from .gateway_factory import GatewayFactory
-from .stripe import StripeConfig, StripeGateway
-
-__all__ = ["GatewayFactory", "StripeGateway", "StripeConfig"]
+# Imports restaurados cuando Stripe + Factory se implementan (ver Fase 3 en 07.1-Subscriptions-roadmap.md)
+#
+# from .gateway_factory import GatewayFactory
+# from .stripe import StripeConfig, StripeGateway
+#
+# __all__ = ["GatewayFactory", "StripeGateway", "StripeConfig"]
