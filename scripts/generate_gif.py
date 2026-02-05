@@ -67,6 +67,6 @@ def create_glitch_gif(input_path, output_path, frames=10):
 if __name__ == "__main__":
     base_dir = Path(__file__).parent.parent
     create_glitch_gif(
-        str(base_dir / "src/bot/media/logo.png"),
-        str(base_dir / "src/bot/media/welcome_glitch.gif")
+        str(base_dir / "src/subscriptions/infrastructure/telegram/media/logo.png"),
+        str(base_dir / "src/subscriptions/infrastructure/telegram/media/welcome_glitch.gif")
     )
