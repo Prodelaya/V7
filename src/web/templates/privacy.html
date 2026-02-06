@@ -1,33 +1,84 @@
 {% extends "base.html" %}
 
 {% block title %}Política de Privacidad - Street Value{% endblock %}
-{% block description %}Política de privacidad del servicio Street Value{% endblock %}
 
 {% block content %}
-<section class="legal">
-    <h1>Política de Privacidad</h1>
+<section class="section">
+    <div class="container">
+        <h1>POLÍTICA DE PRIVACIDAD</h1>
 
-    <!-- TODO: Implementar política de privacidad completa -->
-    <!-- IMPORTANTE: Consultar con asesor legal para GDPR -->
+        <h2>1. RESPONSABLE DEL TRATAMIENTO</h2>
+        <p>¿Quién es el responsable de tus datos?</p>
+        <p>
+            <strong>Identidad:</strong> [TU NOMBRE COMPLETO O RAZÓN SOCIAL]<br>
+            <strong>NIF/DNI:</strong> [TU NIF/DNI]<br>
+            <strong>Dirección:</strong> [TU DIRECCIÓN FISCAL]<br>
+            <strong>Correo electrónico:</strong> [TU EMAIL]
+        </p>
 
-    <p>Última actualización: Diciembre 2024</p>
+        <h2>2. ¿QUÉ DATOS RECOPILAMOS?</h2>
+        <p>Para prestar el servicio de análisis deportivo a través de nuestro Bot y canal de Telegram, únicamente
+            recopilamos los datos estrictamente necesarios:</p>
+        <ul>
+            <li><strong>Datos de identificación:</strong> Tu ID de usuario de Telegram (necesario para gestionar el
+                acceso al canal) y tu nombre de usuario público.</li>
+            <li><strong>Datos de contacto:</strong> Tu dirección de correo electrónico (para comunicaciones sobre el
+                servicio o envío de recibos).</li>
+            <li><strong>Datos económicos:</strong> Historial de transacciones (fecha de pago, importe y plan
+                contratado).</li>
+        </ul>
+        <p><strong>Importante sobre tus datos bancarios:</strong> Nosotros NUNCA tenemos acceso ni almacenamos los datos
+            completos de tu tarjeta de crédito o cuenta bancaria. Los pagos se procesan de forma segura a través de
+            pasarelas de pago externas certificadas (como Stripe, PayPal o Redsys). Nosotros solo recibimos una
+            confirmación de que el pago se ha realizado correctamente para activar tu acceso.</p>
 
-    <h2>1. Datos que Recopilamos</h2>
-    <p>Placeholder - Datos recopilados (ID Telegram, email, datos de pago)</p>
+        <h2>3. ¿CON QUÉ FINALIDAD TRATAMOS TUS DATOS?</h2>
+        <p>Tratamos la información que nos facilitan las personas interesadas con el fin de:</p>
+        <ul>
+            <li><strong>Gestión del servicio:</strong> Habilitar tu acceso al canal privado de Telegram y verificar que
+                tu suscripción está activa.</li>
+            <li><strong>Facturación:</strong> Gestionar el cobro y la emisión de facturas o justificantes de pago
+                obligatorios por ley.</li>
+            <li><strong>Atención al cliente:</strong> Resolver dudas o incidencias técnicas con el Bot.</li>
+        </ul>
+        <p>No utilizaremos tus datos para tomar decisiones automatizadas que te afecten legalmente ni para elaborar
+            perfiles comerciales complejos.</p>
 
-    <h2>2. Uso de los Datos</h2>
-    <p>Placeholder - Propósito del uso de datos</p>
+        <h2>4. LEGITIMACIÓN</h2>
+        <p>¿Por qué es legal que tratemos tus datos? La base legal es la ejecución del contrato de suscripción (Art.
+            6.1.b del RGPD). Al contratar el servicio, el tratamiento de tus datos es necesario para que podamos darte
+            acceso al canal. Sin estos datos (ID de Telegram y confirmación de pago), no podemos prestar el servicio.
+        </p>
 
-    <h2>3. Almacenamiento y Seguridad</h2>
-    <p>Placeholder - Medidas de seguridad</p>
+        <h2>5. ¿POR CUÁNTO TIEMPO CONSERVAMOS TUS DATOS?</h2>
+        <p><strong>Mientras seas cliente:</strong> Tus datos se mantendrán mientras tu suscripción esté activa.</p>
+        <p><strong>Tras la finalización:</strong> Una vez termine tu periodo contratado y no renueves manualmente, tus
+            datos de acceso se bloquearán. Sin embargo, los datos fiscales (facturas y registros de pago) se conservarán
+            durante el tiempo exigido por la normativa tributaria (generalmente 4 o 5 años) para atender posibles
+            requerimientos de Hacienda.</p>
 
-    <h2>4. Terceros</h2>
-    <p>Placeholder - Stripe como procesador de pagos, Telegram</p>
+        <h2>6. DESTINATARIOS (CESIÓN DE DATOS)</h2>
+        <p>Tus datos no se venderán a terceros. Sin embargo, para prestar el servicio, compartimos lo estrictamente
+            necesario con los siguientes proveedores tecnológicos:</p>
+        <ul>
+            <li><strong>Telegram:</strong> La plataforma de mensajería es necesaria para la entrega del servicio. Al
+                usarla, aceptas sus propias políticas de privacidad.</li>
+            <li><strong>Pasarela de Pago:</strong> Stripe Payments Europe, Ltd. para el procesamiento de cobros.</li>
+            <li><strong>Hosting y Web:</strong> [TU PROVEEDOR DE HOSTING] para el alojamiento de la web.</li>
+            <li><strong>Asesoría Fiscal:</strong> En caso de ser necesario para el cumplimiento de obligaciones
+                tributarias.</li>
+        </ul>
 
-    <h2>5. Derechos del Usuario (GDPR)</h2>
-    <p>Placeholder - Derechos de acceso, rectificación, eliminación</p>
-
-    <h2>6. Contacto</h2>
-    <p>Placeholder - Datos de contacto</p>
+        <h2>7. TUS DERECHOS</h2>
+        <p>Como usuario, tienes derecho a:</p>
+        <ul>
+            <li>Acceder a tus datos.</li>
+            <li>Rectificarlos si son inexactos.</li>
+            <li>Solicitar su supresión ("derecho al olvido") cuando ya no sean necesarios.</li>
+            <li>Oponerte al tratamiento o solicitar su limitación.</li>
+        </ul>
+        <p>Para ejercer estos derechos, puedes enviar un email a [TU EMAIL] adjuntando una copia de tu DNI para
+            verificar tu identidad.</p>
+    </div>
 </section>
 {% endblock %}

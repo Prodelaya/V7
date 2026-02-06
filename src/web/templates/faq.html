@@ -4,29 +4,38 @@
 {% block description %}Preguntas frecuentes sobre el sistema Street Value{% endblock %}
 
 {% block content %}
-<section class="faq">
-    <h1>Preguntas Frecuentes</h1>
+<section class="section">
+    <div class="container">
+        <h1>Preguntas Frecuentes</h1>
 
-    <!-- TODO: Implementar FAQ completo -->
+        <div class="glass-panel" style="margin-top: 2rem;">
+            <div class="faq-item" style="margin-bottom: 2rem;">
+                <h3>¿Cómo funciona el sistema?</h3>
+                <p>Nuestro sistema monitoriza en tiempo real las cuotas de más de 50 casas de apuestas. Cuando
+                    detectamos que una casa (ej: Retabet) paga significativamente más que la referencia del mercado
+                    profesional (Pinnacle), te enviamos una alerta inmediata.</p>
+            </div>
 
-    <div class="faq-item">
-        <h3>¿Cómo funciona el sistema?</h3>
-        <p>Placeholder - Explicación del sistema</p>
-    </div>
+            <div class="faq-item" style="margin-bottom: 2rem;">
+                <h3>¿Cómo me suscribo?</h3>
+                <p>La suscripción se gestiona íntegramente a través de nuestro Bot de Telegram. Solo tienes que pulsar
+                    en "Empezar Gratis", seleccionar tu casa de apuestas favorita y completar el pago seguro. Recibirás
+                    acceso instantáneo al canal privado.</p>
+            </div>
 
-    <div class="faq-item">
-        <h3>¿Cómo me suscribo?</h3>
-        <p>Placeholder - Proceso de suscripción</p>
-    </div>
+            <div class="faq-item" style="margin-bottom: 2rem;">
+                <h3>¿Puedo cancelar en cualquier momento?</h3>
+                <p>El servicio no tiene permanencia ni renovación automática oculta. Contratas por el periodo que elijas
+                    (ej: 30 días) y al terminar, simplemente dejas de tener acceso. Si quieres continuar, deberás
+                    renovar manualmente.</p>
+            </div>
 
-    <div class="faq-item">
-        <h3>¿Puedo cancelar en cualquier momento?</h3>
-        <p>Placeholder - Política de cancelación</p>
-    </div>
-
-    <div class="faq-item">
-        <h3>¿Qué métodos de pago aceptáis?</h3>
-        <p>Placeholder - Métodos de pago (Stripe)</p>
+            <div class="faq-item">
+                <h3>¿Qué métodos de pago aceptáis?</h3>
+                <p>Aceptamos pagos con tarjeta de crédito/débito a través de Stripe, una plataforma de pagos 100% segura
+                    y certificada.</p>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}

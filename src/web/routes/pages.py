@@ -42,3 +42,11 @@ async def terms(request: Request):
 @router.get("/privacy")
 async def privacy(request: Request):
     return templates.TemplateResponse("privacy.html", {"request": request})
+
+@router.get("/legal")
+async def legal(request: Request):
+    return templates.TemplateResponse("legal.html", {"request": request})
+
+@router.get("/cookies")
+async def cookies(request: Request):
+    return templates.TemplateResponse("cookies.html", {"request": request})
